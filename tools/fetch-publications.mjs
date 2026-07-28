@@ -56,7 +56,26 @@ const CONFIG = {
   ]),
 };
 
-const esc = (s) => String(s ?? '')
+// Crossref hands back titles that are ALREADY HTML-encoded ("Computing in
+// Science &amp; Engineering"), and occasionally double-encoded. Escaping those
+// again produces visible "&amp;amp;" on the page, so decode to plain text first
+// and then escape exactly once. The loop handles the double-encoded cases.
+const ENTITIES = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' };
+
+function decodeEntities(s) {
+  let out = String(s ?? '');
+  for (let i = 0; i < 3; i++) {
+    const next = out
+      .replace(/&(amp|lt|gt|quot|apos|nbsp);/gi, (_, e) => ENTITIES[e.toLowerCase()])
+      .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)))
+      .replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCodePoint(parseInt(n, 16)));
+    if (next === out) break;
+    out = next;
+  }
+  return out;
+}
+
+const esc = (s) => decodeEntities(s)
   .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
   .replace(/"/g, '&quot;');
 
@@ -70,7 +89,7 @@ async function fetchAll() {
   const select = [
     'id', 'doi', 'title', 'publication_year', 'publication_date', 'type',
     'primary_location', 'best_oa_location', 'open_access', 'authorships',
-    'cited_by_count',
+    'cited_by_count', 'biblio',
   ].join(',');
 
   const works = [];
@@ -89,6 +108,79 @@ async function fetchAll() {
     if (!data.results.length) break;
   }
   return works;
+}
+
+/**
+ * OpenAlex is missing the venue for about half of these papers — it has no
+ * proceedings record for many IEEE and ACM conferences. Crossref, which is the
+ * registration agency behind the DOIs themselves, has all of them, plus volume,
+ * issue, and page numbers. So Crossref is the authority for the citation line
+ * and OpenAlex is the fallback.
+ *
+ * One request per DOI. Crossref rate-limits hard: at six concurrent requests it
+ * returned 429 for well over a third of them, and because a failed lookup falls
+ * back silently to OpenAlex, the only visible symptom was a suspiciously low
+ * venue count. Hence the low concurrency, the retry on 429, and the explicit
+ * count of failures printed at the end — a silent degradation here looks exactly
+ * like "OpenAlex just doesn't have the data".
+ */
+let crossrefFailures = 0;
+
+async function crossrefGet(url, tries = 4) {
+  for (let attempt = 0; attempt < tries; attempt++) {
+    const res = await fetch(url, { headers: { 'User-Agent': `brainlabresearch.org (mailto:${CONFIG.mailto})` } });
+    if (res.status !== 429) return res;
+    const retryAfter = Number(res.headers.get('retry-after'));
+    const wait = Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : 400 * 2 ** attempt;
+    await new Promise((r) => setTimeout(r, wait));
+  }
+  return null;
+}
+
+async function enrich(works) {
+  const cite = async (w) => {
+    const oa = {
+      venue: w.primary_location?.source?.display_name ?? null,
+      volume: w.biblio?.volume ?? null,
+      issue: w.biblio?.issue ?? null,
+      first: w.biblio?.first_page ?? null,
+      last: w.biblio?.last_page ?? null,
+    };
+    if (!w.doi) return { ...w, cite: oa };
+
+    try {
+      const doi = String(w.doi).replace(/^https?:\/\/(dx\.)?doi\.org\//, '');
+      const res = await crossrefGet(
+        `https://api.crossref.org/works/${encodeURIComponent(doi)}?mailto=${encodeURIComponent(CONFIG.mailto)}`);
+      if (!res || !res.ok) { crossrefFailures++; return { ...w, cite: oa }; }
+      const m = (await res.json()).message ?? {};
+
+      const container = (m['container-title'] ?? []).find(Boolean) ?? m.event?.name ?? null;
+      const [first, last] = String(m.page ?? '').split(/[-–]/);
+      return {
+        ...w,
+        cite: {
+          venue: container ?? oa.venue,
+          volume: m.volume ?? oa.volume,
+          issue: m.issue ?? oa.issue,
+          first: first || oa.first,
+          last: last || oa.last,
+        },
+      };
+    } catch {
+      crossrefFailures++;
+      return { ...w, cite: oa };
+    }
+  };
+
+  const out = [];
+  const BATCH = 2;
+  for (let i = 0; i < works.length; i += BATCH) {
+    out.push(...await Promise.all(works.slice(i, i + BATCH).map(cite)));
+    process.stdout.write(`\r  enriching from Crossref… ${Math.min(i + BATCH, works.length)}/${works.length}`);
+  }
+  process.stdout.write('\n');
+  return out;
 }
 
 function tidy(works) {
@@ -150,11 +242,24 @@ const TYPE_LABEL = {
   'dissertation': 'Dissertation',
 };
 
+/** "Neurocomputing, vol. 381, no. 2, pp. 89–106" — parts omitted when unknown. */
+function citation(w) {
+  const c = w.cite ?? {};
+  const name = c.venue ?? TYPE_LABEL[w.type] ?? '';
+  if (!name) return '';
+
+  const bits = [];
+  if (c.volume) bits.push(`vol. ${esc(c.volume)}`);
+  if (c.issue) bits.push(`no. ${esc(c.issue)}`);
+  if (c.first && c.last && c.first !== c.last) bits.push(`pp. ${esc(c.first)}–${esc(c.last)}`);
+  else if (c.first) bits.push(`p. ${esc(c.first)}`);
+  if (w.type === 'preprint') bits.push('preprint');
+
+  return `<em>${esc(name)}</em>${bits.length ? `<span class="biblio">, ${bits.join(', ')}</span>` : ''}`;
+}
+
 function renderWork(w) {
-  const source = w.primary_location?.source?.display_name;
-  const venue = source
-    ? source + (w.type === 'preprint' ? ' · preprint' : '')
-    : (TYPE_LABEL[w.type] ?? '');
+  const venue = citation(w);
   const doiUrl = w.doi;
   const oaUrl = w.best_oa_location?.pdf_url ?? w.open_access?.oa_url;
 
@@ -170,7 +275,7 @@ function renderWork(w) {
         <div>
           <h4>${titleHtml}</h4>
           <p class="authors">${authorLine(w)}</p>
-          ${venue ? `<p class="venue">${esc(venue)}</p>` : ''}
+          ${venue ? `<p class="venue">${venue}</p>` : ''}
         </div>
         ${links.length ? `<div class="links">${links.join('')}</div>` : '<div class="links"></div>'}
       </div>`;
@@ -187,9 +292,6 @@ function renderPage(works) {
   const body = [...byYear.entries()].map(([year, items]) => `
       <div class="pub-year">${esc(year)}</div>
 ${items.map(renderWork).join('\n')}`).join('\n');
-
-  const years = works.map((w) => w.publication_year).filter(Boolean);
-  const range = years.length ? `${Math.min(...years)}–${Math.max(...years)}` : '';
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -230,7 +332,6 @@ ${items.map(renderWork).join('\n')}`).join('\n');
   <div class="wrap">
     <div class="eyebrow">Publications</div>
     <h1>The work</h1>
-    <p>${works.length} publications${range ? `, ${range}` : ''} — memristive learning circuits, spiking network hardware, reservoir computing, and the adversarial robustness of neuromorphic systems.</p>
   </div>
 </header>
 
@@ -276,11 +377,17 @@ ${body}
 }
 
 const raw = await fetchAll();
-const works = tidy(raw);
+console.log(`fetched ${raw.length} records from OpenAlex`);
+const works = await enrich(tidy(raw));
 mkdirSync(dirname(CONFIG.out), { recursive: true });
 writeFileSync(CONFIG.out, renderPage(works), 'utf8');
 
 const dropped = raw.length - works.length;
-console.log(`fetched ${raw.length} records from OpenAlex`);
+const named = works.filter((w) => w.cite?.venue).length;
 console.log(`wrote   ${works.length} publications to ${CONFIG.out}`);
 if (dropped > 0) console.log(`dropped ${dropped} (duplicates, preprints of published work, and non-article types)`);
+console.log(`venues  ${named}/${works.length} have a named journal or conference`);
+if (crossrefFailures > 0) {
+  console.warn(`WARNING ${crossrefFailures} Crossref lookups failed even after retrying — those entries`);
+  console.warn(`        fall back to OpenAlex and may show no venue. Re-run to pick them up.`);
+}

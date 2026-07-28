@@ -35,9 +35,21 @@ the page keeps itself current.
 
 **Why not Google Scholar.** Scholar has no public API and actively blocks
 automated access — CAPTCHAs, IP bans. A scraper works for a while, then breaks,
-and can't run in CI at all. The data comes from [OpenAlex](https://openalex.org)
-instead, which is free, open, and permits automated use. Scholar is still linked
-from the page and the footer.
+and can't run in CI at all. Scholar is still linked from the page and the footer.
+
+**Two sources.** [OpenAlex](https://openalex.org) supplies the list of works,
+the authors, and the open-access PDF links. [Crossref](https://crossref.org)
+supplies the citation line — journal or proceedings name, volume, issue, pages —
+because OpenAlex has no proceedings record for a lot of IEEE and ACM conferences
+and would otherwise leave half the list with no venue at all. Both are free and
+need no key.
+
+**Crossref rate-limits aggressively.** At six concurrent requests it returned 429
+for more than a third of them. Because a failed lookup falls back silently to
+OpenAlex, the only symptom was a low venue count that looked like missing data
+rather than a bug. The script now runs two at a time, retries on 429, and prints
+a warning naming the number of failures. If you see that warning, just re-run —
+and don't raise the concurrency.
 
 **Two things about OpenAlex worth knowing:**
 

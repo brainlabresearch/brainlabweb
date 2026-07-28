@@ -152,7 +152,9 @@ a{color:inherit}
 .pub h4 a:hover{color:var(--excite)}
 .pub .authors{margin:6px 0 0;font-size:14.5px;color:#39424B;line-height:1.45;max-width:78ch}
 .pub .authors b{font-weight:600;color:var(--graphite)}
-.pub .venue{margin:3px 0 0;font-family:var(--body);font-style:italic;font-size:14.5px;color:var(--muted)}
+.pub .venue{margin:3px 0 0;font-family:var(--body);font-size:14.5px;color:var(--muted)}
+.pub .venue em{font-style:italic}
+.pub .venue .biblio{font-family:var(--mono);font-size:12px;letter-spacing:.01em}
 .pub .links{display:flex;gap:13px;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;white-space:nowrap}
 .pub .links a{text-decoration:none;color:var(--muted);border-bottom:1px solid var(--rule);padding-bottom:2px}
 .pub .links a:hover{color:var(--excite);border-bottom-color:var(--excite)}

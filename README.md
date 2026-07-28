@@ -5,17 +5,55 @@ No build step, no dependencies, no framework. Open `index.html` in a browser to
 preview locally; what you see is what deploys.
 
 ```
-index.html        home — hero, mission, latest three news items, join/publications
-research.html     the three research areas
-people.html       PI, current research assistants, alumni
-news.html         full news list
+index.html         home — hero, mission, latest three news items, join/publications
+research.html      the three research areas
+people.html        PI, current research assistants, alumni
+news.html          full news list
+publications.html  GENERATED — do not edit by hand (see below)
 404.html
 assets/css/site.css
 assets/js/site.js
-assets/people/    headshots (see below)
-CNAME             custom domain for GitHub Pages
-.nojekyll         tells Pages to serve the files as-is, no Jekyll processing
+assets/people/     headshots (see below)
+tools/             the publications generator
+CNAME              custom domain for GitHub Pages
+.nojekyll          tells Pages to serve the files as-is, no Jekyll processing
 ```
+
+---
+
+## Publications
+
+`publications.html` is generated. Don't edit it — your changes get overwritten.
+
+```bash
+node tools/fetch-publications.mjs
+```
+
+Zero dependencies, no API key. `.github/workflows/publications.yml` also runs it
+on the 1st of each month and commits the result only if something changed, so
+the page keeps itself current.
+
+**Why not Google Scholar.** Scholar has no public API and actively blocks
+automated access — CAPTCHAs, IP bans. A scraper works for a while, then breaks,
+and can't run in CI at all. The data comes from [OpenAlex](https://openalex.org)
+instead, which is free, open, and permits automated use. Scholar is still linked
+from the page and the footer.
+
+**Two things about OpenAlex worth knowing:**
+
+*Split identities.* Cory Merkel has two OpenAlex author records. Both are listed
+in `CONFIG.authorIds` and the results de-duplicated. If publications start going
+missing, search `api.openalex.org/authors?search=Cory Merkel` for a third record
+and add its ID.
+
+*Misattribution.* OpenAlex disambiguates authors automatically and sometimes
+merges different people with the same name — it had credited a 1985 NASA report
+on West German wind power. `CONFIG.minYear` filters the obvious cases; for a
+wrong paper inside the year range, add its ID to `CONFIG.excludeIds`.
+
+The nav and footer inside `tools/fetch-publications.mjs` are copies of the ones
+in the other pages, the same way those duplicate each other. Change the nav
+site-wide and you have to change it there too, or this page drifts.
 
 ---
 

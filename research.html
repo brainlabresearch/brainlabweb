@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Research — Brain Lab, RIT</title>
+<meta name="description" content="Memristive devices that emulate biology, energy-efficient network topologies and training algorithms, and the security of neuromorphic computing systems.">
+<link rel="canonical" href="https://www.brainlabresearch.org/research.html">
+<meta property="og:title" content="Research — Brain Lab, RIT">
+<meta property="og:description" content="Memristors, spiking neural networks, random projection networks, and adversarial robustness in neuromorphic hardware.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,300..700;1,6..72,300..500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/site.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<nav class="nav" id="nav">
+  <div class="nav-in">
+    <a class="brand" href="index.html">BRAIN LAB <span>RIT</span></a>
+    <div class="nav-links">
+      <a href="research.html" aria-current="page">Research</a>
+      <a href="people.html">People</a>
+      <a href="news.html">News</a>
+      <a href="https://scholar.google.com/citations?hl=en&user=YnhtWqYAAAAJ&view_op=list_works&sortby=pubdate">Publications</a>
+      <a href="index.html#join" class="nav-cta">Join us</a>
+    </div>
+  </div>
+</nav>
+
+<header class="pagehead">
+  <canvas id="raster" aria-hidden="true"></canvas>
+  <div class="wrap">
+    <div class="eyebrow">Research</div>
+    <h1>Three threads, one question:<br>how cheap can intelligence get?</h1>
+    <p>From SPICE-level device models through training algorithms to the security of the resulting systems.</p>
+  </div>
+</header>
+
+<main id="main">
+<section class="sec wrap reveal">
+
+  <div class="area">
+    <svg class="area-glyph" viewBox="0 0 110 88" fill="none" aria-hidden="true">
+      <g stroke="currentColor" stroke-width="1.3" stroke-opacity=".55">
+        <line x1="6" y1="18" x2="104" y2="18"/><line x1="6" y1="38" x2="104" y2="38"/>
+        <line x1="6" y1="58" x2="104" y2="58"/><line x1="6" y1="78" x2="104" y2="78"/>
+        <line x1="22" y1="6" x2="22" y2="86"/><line x1="46" y1="6" x2="46" y2="86"/>
+        <line x1="70" y1="6" x2="70" y2="86"/><line x1="94" y1="6" x2="94" y2="86"/>
+      </g>
+      <circle cx="22" cy="18" r="4.2" fill="#F76902"/><circle cx="70" cy="38" r="3" fill="#1FA08F"/>
+      <circle cx="46" cy="58" r="4.6" fill="#F76902"/><circle cx="94" cy="78" r="2.6" fill="#1FA08F"/>
+      <circle cx="94" cy="18" r="2.4" fill="currentColor" fill-opacity=".4"/>
+      <circle cx="22" cy="58" r="2.2" fill="currentColor" fill-opacity=".4"/>
+    </svg>
+    <div>
+      <h3>Emerging devices that emulate biology</h3>
+      <p>We develop and exploit beyond-CMOS devices to implement AI primitives — synaptic plasticity, neuronal spiking — directly in hardware. Memristors are the main focus: they store data and perform analog multiplication in the same element, collapsing the von Neumann bottleneck that dominates the energy cost of load–compute–store architectures. Most of our work integrates memristors into neuron, synapse, and training circuits, alongside semi-empirical modeling and SPICE model development. We're also interested in three- and four-terminal memristors and biristors for spiking neuron implementation.</p>
+      <div class="tags"><span class="tag">Memristors</span><span class="tag">Crossbar arrays</span><span class="tag">SPICE modeling</span><span class="tag">Synaptic circuits</span></div>
+    </div>
+  </div>
+
+  <div class="area">
+    <svg class="area-glyph" viewBox="0 0 110 88" fill="none" aria-hidden="true">
+      <g stroke="currentColor" stroke-width="1.5">
+        <line x1="6" y1="16" x2="104" y2="16" stroke-opacity=".28"/>
+        <line x1="6" y1="44" x2="104" y2="44" stroke-opacity=".28"/>
+        <line x1="6" y1="72" x2="104" y2="72" stroke-opacity=".28"/>
+        <g stroke="#F76902"><line x1="18" y1="8" x2="18" y2="24"/><line x1="40" y1="8" x2="40" y2="24"/><line x1="47" y1="8" x2="47" y2="24"/><line x1="86" y1="8" x2="86" y2="24"/></g>
+        <g stroke="currentColor"><line x1="12" y1="36" x2="12" y2="52"/><line x1="58" y1="36" x2="58" y2="52"/><line x1="66" y1="36" x2="66" y2="52"/><line x1="72" y1="36" x2="72" y2="52"/><line x1="98" y1="36" x2="98" y2="52"/></g>
+        <g stroke="#1FA08F"><line x1="26" y1="64" x2="26" y2="80"/><line x1="33" y1="64" x2="33" y2="80"/><line x1="62" y1="64" x2="62" y2="80"/><line x1="92" y1="64" x2="92" y2="80"/></g>
+      </g>
+    </svg>
+    <div>
+      <h3>Energy-efficient topologies and training algorithms</h3>
+      <p>Device randomness is usually treated as a defect. We treat it as a resource. A recurring theme is random projection networks — networks with random weights and topologies that fit a target function by pairing linear regression with a large random feature space, and that need far fewer hardware resources than conventional alternatives. We also design training algorithms tailored to learning <em>in</em> hardware, including stochastic logic that cuts the overhead of gradient computation. Related interests: spiking neural network hardware, energy-harvesting AI, and perturbation-based learning.</p>
+      <div class="tags"><span class="tag">Random projection</span><span class="tag">Reservoir computing</span><span class="tag">Stochastic logic</span><span class="tag">In-hardware learning</span></div>
+    </div>
+  </div>
+
+  <div class="area">
+    <svg class="area-glyph" viewBox="0 0 110 88" fill="none" aria-hidden="true">
+      <path d="M8 78 C36 66 42 22 100 12" stroke="currentColor" stroke-width="1.5" stroke-dasharray="5 5" stroke-opacity=".6"/>
+      <g fill="#1FA08F"><circle cx="24" cy="30" r="3.2"/><circle cx="40" cy="20" r="3.2"/><circle cx="58" cy="14" r="3.2"/><circle cx="30" cy="44" r="3.2"/></g>
+      <g fill="currentColor" fill-opacity=".38"><circle cx="66" cy="52" r="3.2"/><circle cx="84" cy="44" r="3.2"/><circle cx="76" cy="68" r="3.2"/><circle cx="96" cy="62" r="3.2"/></g>
+      <circle cx="52" cy="34" r="5" fill="#F76902"/>
+      <path d="M40 46 L52 34" stroke="#F76902" stroke-width="1.5"/>
+      <circle cx="40" cy="46" r="2.6" fill="none" stroke="#F76902" stroke-width="1.5"/>
+    </svg>
+    <div>
+      <h3>Trustworthy neuromorphic systems</h3>
+      <p>AI is moving into size-, weight-, and power-constrained places — wearables, phones, robots, UAVs, satellites — and custom neuromorphic hardware is following it there. The security questions have not kept up. Deep networks are famously vulnerable to adversarial attack, yet almost nothing is known about how hardware-specific characteristics (low precision, process variation, defects, noise) change that vulnerability. We work on three fronts: modeling how hardware faults and noise affect adversarial susceptibility, designing adversarially robust training for neuromorphic systems, and developing new attacks that exploit hardware-specific attributes.</p>
+      <div class="tags"><span class="tag">Adversarial robustness</span><span class="tag">Side channels</span><span class="tag">Process variation</span><span class="tag">Edge AI security</span></div>
+    </div>
+  </div>
+
+  <p style="margin-top:34px"><a class="btn-line" href="https://scholar.google.com/citations?hl=en&user=YnhtWqYAAAAJ&view_op=list_works&sortby=pubdate">Publications on Google Scholar</a></p>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot">
+      <div>
+        <div class="foot-mark">BRAIN LAB</div>
+        <p style="color:var(--muted);max-width:34ch;font-size:15px">Neuroscience, machine learning, and the hardware in between.</p>
+      </div>
+      <div>
+        <h5>Find us</h5>
+        <p>Rochester Institute of Technology<br>83 Lomb Memorial Drive<br>Rochester, NY 14623</p>
+      </div>
+      <div>
+        <h5>Elsewhere</h5>
+        <a href="mailto:cemeec@rit.edu">cemeec@rit.edu</a>
+        <a href="https://www.linkedin.com/company/ritbrainlab">LinkedIn</a>
+        <a href="https://twitter.com/ritbrainlab">X / Twitter</a>
+        <a href="https://scholar.google.com/citations?hl=en&user=YnhtWqYAAAAJ&view_op=list_works&sortby=pubdate">Google Scholar</a>
+      </div>
+    </div>
+    <div class="colophon">
+      <span>© Rochester Institute of Technology</span>
+      <span>Kate Gleason College of Engineering</span>
+      <span>Department of Computer Engineering</span>
+    </div>
+  </div>
+</footer>
+
+<script src="assets/js/site.js"></script>
+</body>
+</html>

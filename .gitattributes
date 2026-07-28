@@ -1,0 +1,10 @@
+# Keep LF in the repository regardless of what Windows does locally.
+# Without this, fetch-headshots.sh gets committed with CRLF line endings and
+# fails to run on macOS or Linux.
+* text=auto eol=lf
+*.sh text eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ico binary

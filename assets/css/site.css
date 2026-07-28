@@ -151,8 +151,9 @@ a{color:inherit}
 @media(max-width:700px){.news-item{grid-template-columns:1fr}.news-item .arrow{display:none}}
 
 /* ---------- topic cloud ----------
-   Size encodes term frequency; motion across windows encodes change. The words
-   carry no colour data on purpose — the accent is spent on the controls only. */
+   Polar layout: every term keeps one fixed angle and moves only along that ray,
+   inward as it gets more frequent. Absolutely positioned, so words never reflow
+   one another — which is what makes it safe to transition font-size here. */
 .cloud-wrap{position:relative;margin-top:26px}
 .cloud-controls{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:18px}
 .cloud-play{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
@@ -162,37 +163,25 @@ a{color:inherit}
 .cloud-window{font-family:var(--mono);font-size:11.5px;color:var(--muted);display:flex;gap:12px;align-items:baseline}
 .cloud-window b{font-size:14px;color:var(--graphite);letter-spacing:.02em}
 
-/* align-items:center, not baseline — baseline with font sizes ranging 13px to
-   46px drags the small words down onto the descenders of the large ones and the
-   rows read as ragged. Generous row gap for the same reason. */
-.cloud{position:relative;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;
-  gap:12px 20px;min-height:270px;padding:30px 14px;background:var(--paper-2);
-  /* A narrower size range than looks exciting on paper. The wider the range, the
-     more the line-wrap points move between frames, and every moved wrap point is
-     a row of words sliding across each other. */
-  --wmin:15px;--wmax:39px}
-.cloud .w{--s:.5;display:inline-block;font-family:var(--display);font-weight:600;letter-spacing:-.02em;
-  line-height:1;color:var(--graphite);
+/* Constrained width: at the full 1220px content measure a dozen words read as
+   scattered rather than as a cloud. */
+.cloud{position:relative;overflow:hidden;background:var(--paper-2);
+  max-width:920px;margin:0 auto;height:clamp(340px,38vw,430px);--wmin:12px;--wmax:38px}
+.cloud .w{--s:0;position:absolute;left:50%;top:50%;white-space:nowrap;
+  font-family:var(--display);font-weight:600;letter-spacing:-.02em;line-height:1;
+  color:var(--graphite);opacity:0;
   font-size:calc(var(--wmin) + (var(--wmax) - var(--wmin)) * var(--s));
-  opacity:calc(.52 + .48 * var(--s));
-  /* font-size is deliberately NOT transitioned. Animating it reflows the row on
-     every frame, so the FLIP measurement below reads each word at its old size,
-     computes the wrong delta, and lands everything on top of everything else.
-     Size snaps; only position and opacity animate. */
-  transition:transform .3s cubic-bezier(.25,.8,.35,1),opacity .26s ease;
-  will-change:transform;
-  cursor:default}
-.cloud .w:hover{color:var(--excite);opacity:1}
-.cloud .w.is-new{opacity:0;transform:scale(.82)}
-/* Departing words leave the flow so they don't shove survivors, but that means
-   they briefly sit on top of them. Fading fast keeps the overlap from reading
-   as a collision. */
-.cloud .w.is-out{position:absolute;opacity:0;transform:scale(.7);pointer-events:none;
-  transition:transform .22s ease,opacity .22s ease}
-.cloud-failed .cloud{min-height:0;padding:18px}
+  transition:transform 820ms cubic-bezier(.33,.02,.28,1),
+             font-size 820ms cubic-bezier(.33,.02,.28,1),
+             opacity 620ms ease;
+  will-change:transform,font-size,opacity;cursor:default}
+.cloud .w:hover{color:var(--excite)}
+/* Used for the very first paint so nothing flies in from the centre. */
+.cloud.no-anim .w{transition:none}
+.cloud-failed .cloud{height:auto;padding:18px}
 
 .cloud-tip{position:absolute;transform:translate(-50%,-100%);background:var(--graphite);color:var(--paper);
-  font-family:var(--mono);font-size:11px;padding:5px 9px;pointer-events:none;white-space:nowrap;z-index:5}
+  font-family:var(--mono);font-size:11px;padding:5px 9px;pointer-events:none;white-space:nowrap;z-index:40}
 .cloud-status{font-family:var(--mono);font-size:12px;color:var(--muted)}
 
 .cloud-table{margin-top:16px;font-family:var(--mono);font-size:12px}
@@ -201,7 +190,8 @@ a{color:inherit}
 .cloud-table td{padding:3px 0;border-bottom:1px dotted var(--rule)}
 .cloud-table td:last-child{text-align:right;color:var(--muted)}
 
-@media(max-width:700px){.cloud{--wmax:28px;min-height:230px;gap:4px 11px}}
+@media(max-width:700px){.cloud{--wmax:26px;--wmin:11px}}
+@media(prefers-reduced-motion:reduce){.cloud .w{transition:none}}
 
 /* ---------- publications ---------- */
 .pub-year{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--excite);margin:44px 0 0;padding-top:14px;border-top:1px solid var(--rule)}

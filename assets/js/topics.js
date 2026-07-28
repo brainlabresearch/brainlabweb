@@ -1,13 +1,27 @@
 /* Brain Lab — animated topic cloud.
-   Reads assets/data/topics.json (built by tools/fetch-topics.mjs from the
-   abstracts OpenAlex holds for the lab's papers) and steps through overlapping
-   four-year windows so the drift in subject matter is visible as motion.
+   Reads assets/data/topics.json (built by tools/fetch-topics.mjs from paper
+   titles) and slides a twenty-paper window forward one paper at a time.
 
-   Encoding: SIZE is how often a term appears in that window; MOTION over the
-   windows is the change. Colour deliberately carries no data — the words are all
-   one ink. An earlier version coloured them by rising/falling, but a teal dark
-   enough to read as body text on this pale ground sits too close to grey to be
-   told apart, and the animation already says the same thing. */
+   LAYOUT is polar. Every term owns a fixed angle for the whole animation and
+   only ever moves along that one ray: frequent terms sit near the centre and
+   large, and as a term fades from the lab's output it drifts outward, shrinking,
+   until it leaves the edge. Radius is therefore a real encoding — distance from
+   centre means "how central to the work right now" — and because a term's angle
+   never changes, the eye can track it across the whole fifteen years.
+
+   Two consequences worth knowing:
+
+   - Every term in the vocabulary stays in the DOM permanently, at opacity 0 when
+     it is absent from the current window. Nothing is ever added or removed, so
+     there is no enter/exit popping — only movement.
+   - The words are absolutely positioned, so they cannot reflow each other. That
+     is what makes it safe to transition font-size here; in the earlier flow
+     layout, animating size reflowed the container mid-transition and words piled
+     up on one another.
+
+   Colour carries no data. Size and radius already encode frequency, and the two
+   site accents are not separable enough as text on this pale ground to encode
+   anything a reader could actually decode. */
 (function () {
   var root = document.querySelector('[data-topics]');
   if (!root) return;
@@ -21,10 +35,19 @@
   var tip = root.querySelector('.cloud-tip');
 
   var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var HOLD = 340;          /* ms per frame — shorter than the CSS transition, on
+                              purpose: words are still travelling when the next
+                              frame retargets them, which is what turns a series
+                              of steps into continuous drift. */
+  var GOLDEN = 137.50776;  /* degrees; the phyllotaxis angle. Spreads successive
+                              vocabulary entries around the circle without the
+                              clustering a random or evenly-divided angle gives. */
+
   var windows = [];
+  var nodes = {};
   var at = 0;
   var timer = null;
-  var HOLD = 2100;
+  var rx = 0, ry = 0;
 
   fetch('assets/data/topics.json')
     .then(function (r) {
@@ -33,41 +56,55 @@
     })
     .then(function (data) {
       windows = data.windows || [];
-      if (!windows.length) throw new Error('no windows');
+      if (!windows.length || !data.vocab) throw new Error('empty');
+      build(data.vocab);
       start();
     })
     .catch(function () {
-      /* Never leave an empty box on the page. */
-      if (status) {
-        status.textContent = 'Topic data could not be loaded.';
-        status.hidden = false;
-      }
+      if (status) { status.hidden = false; }
       root.classList.add('cloud-failed');
     });
+
+  function build(vocab) {
+    vocab.forEach(function (term, i) {
+      var el = document.createElement('span');
+      el.className = 'w';
+      el.textContent = term;
+      el.dataset.t = term;
+      /* Fixed for the lifetime of the animation. */
+      el.dataset.a = String((i * GOLDEN) % 360);
+      bindTip(el);
+      cloud.appendChild(el);
+      nodes[term] = el;
+    });
+    measure();
+    addEventListener('resize', function () { measure(); paint(windows[at], false); });
+  }
+
+  function measure() {
+    var b = cloud.getBoundingClientRect();
+    /* Inset generously: a word is placed by its centre, so a long term sitting
+       at the rim would otherwise hang outside the panel. */
+    rx = Math.max(60, b.width / 2 - 96);
+    ry = Math.max(50, b.height / 2 - 34);
+  }
 
   function start() {
     root.classList.add('cloud-ready');
     scrub.max = String(windows.length - 1);
     scrub.value = '0';
-    render(0, false);
+    paint(windows[0], false);
 
     scrub.addEventListener('input', function () {
       pause();
-      render(Number(scrub.value), true);
+      show(Number(scrub.value));
     });
-    playBtn.addEventListener('click', function () {
-      timer ? pause() : play();
-    });
+    playBtn.addEventListener('click', function () { timer ? pause() : play(); });
 
-    /* Autoplay only once the section is actually on screen, and never under
-       reduced-motion — an animation nobody asked for that starts off-screen is
-       just churn. */
     if (!reduce && 'IntersectionObserver' in window) {
       var io = new IntersectionObserver(function (entries) {
-        entries.forEach(function (e) {
-          if (e.isIntersecting) { play(); io.disconnect(); }
-        });
-      }, { threshold: 0.35 });
+        entries.forEach(function (e) { if (e.isIntersecting) { play(); io.disconnect(); } });
+      }, { threshold: 0.3 });
       io.observe(root);
     }
   }
@@ -76,9 +113,7 @@
     if (timer) return;
     playBtn.textContent = 'Pause';
     playBtn.setAttribute('aria-label', 'Pause the topic animation');
-    timer = setInterval(function () {
-      render((at + 1) % windows.length, true);
-    }, HOLD);
+    timer = setInterval(function () { show((at + 1) % windows.length); }, HOLD);
   }
 
   function pause() {
@@ -89,88 +124,142 @@
     playBtn.setAttribute('aria-label', 'Play the topic animation');
   }
 
-  function render(i, animate) {
+  function show(i) {
     at = i;
-    var w = windows[i];
-    var max = w.terms.reduce(function (m, t) { return Math.max(m, t.n); }, 1);
-
     scrub.value = String(i);
+    paint(windows[i], true);
+  }
+
+  function paint(w, animate) {
+    if (!w) return;
+    var present = {};
+    w.terms.forEach(function (t) { present[t.t] = t.n; });
+
     scrub.setAttribute('aria-valuetext', w.from + ' to ' + w.to);
     label.innerHTML = '<b>' + w.from + '–' + w.to + '</b><span>' + w.papers + ' papers</span>';
 
-    /* FLIP: measure where everything is, rebuild, then animate from the old
-       positions to the new ones. Without this the words teleport whenever a
-       neighbour changes size, and the drift becomes impossible to follow. */
-    var before = {};
-    var kids = Array.prototype.slice.call(cloud.children);
-    kids.forEach(function (el) { before[el.dataset.t] = el.getBoundingClientRect(); });
+    /* Radius comes from RANK, not from the raw count.
+       A twenty-title window produces counts like 2, 2, 2, 3, 9 — so normalised
+       frequency spans a narrow band near the top and every term lands in a knot
+       at the centre, using maybe a third of the panel. Rank spreads them evenly
+       across the full radius however compressed the counts happen to be. Within
+       a frame rank IS frequency order, so the meaning is unchanged; the counts
+       are still exact in the tooltip and the table. */
+    var ranked = w.terms.slice().sort(function (a, b) {
+      return (b.n - a.n) || (a.t < b.t ? -1 : a.t > b.t ? 1 : 0);
+    });
+    var N = ranked.length;
+    var wmin = parseFloat(getComputedStyle(cloud).getPropertyValue('--wmin')) || 12;
+    var wmax = parseFloat(getComputedStyle(cloud).getPropertyValue('--wmax')) || 38;
 
-    var wanted = {};
-    w.terms.forEach(function (t) { wanted[t.t] = t.n; });
-
-    kids.forEach(function (el) {
-      if (!(el.dataset.t in wanted)) exit(el, before[el.dataset.t]);
+    var live = ranked.map(function (t, rank) {
+      var p = N > 1 ? 1 - rank / (N - 1) : 1;
+      var el = nodes[t.t];
+      var theta = Number(el.dataset.a) * Math.PI / 180;
+      var tr = Math.pow(1 - p, 0.78) * 0.95;
+      var fs = wmin + (wmax - wmin) * p;
+      return {
+        el: el, n: t.n, p: p, fs: fs,
+        x: Math.cos(theta) * rx * tr,
+        y: Math.sin(theta) * ry * tr,
+        /* 0.54em average glyph width is close enough for Archivo at these
+           weights; this only has to be good enough to detect a collision. */
+        hw: t.t.length * fs * 0.54 / 2,
+        hh: fs * 1.15 / 2,
+      };
     });
 
-    /* Alphabetical, so a term that survives keeps roughly the same neighbours
-       from frame to frame. A frequency-ordered or randomly packed layout
-       reshuffles on every step and reads as noise. */
-    w.terms.slice().sort(function (a, b) {
-      return a.t < b.t ? -1 : a.t > b.t ? 1 : 0;
-    }).forEach(function (t) {
-      var el = cloud.querySelector('[data-t="' + cssEscape(t.t) + '"]');
-      var isNew = !el;
-      if (isNew) {
-        el = document.createElement('span');
-        el.className = 'w';
-        el.dataset.t = t.t;
-        el.textContent = t.t;
-        bindTip(el);
-      }
-      el.dataset.n = t.n;
-      el.style.setProperty('--s', (Math.sqrt(t.n / max)).toFixed(3));
-      cloud.appendChild(el);
-      if (isNew && animate && !reduce) {
-        el.classList.add('is-new');
-        requestAnimationFrame(function () { el.classList.remove('is-new'); });
-      }
+    relax(live);
+
+    live.forEach(function (o) {
+      o.el.style.transform = 'translate(-50%,-50%) translate('
+        + o.x.toFixed(1) + 'px,' + o.y.toFixed(1) + 'px)';
+      o.el.style.setProperty('--s', o.p.toFixed(3));
+      o.el.style.opacity = (0.42 + 0.58 * o.p).toFixed(2);
+      o.el.style.zIndex = String(Math.round(o.p * 20));
+      o.el.dataset.n = o.n;
+      o.el.setAttribute('aria-hidden', 'false');
+      o.el.style.pointerEvents = 'auto';
     });
 
-    if (animate && !reduce) {
-      Array.prototype.forEach.call(cloud.children, function (el) {
-        var was = before[el.dataset.t];
-        if (!was) return;
-        var now = el.getBoundingClientRect();
-        var dx = was.left - now.left;
-        var dy = was.top - now.top;
-        if (!dx && !dy) return;
-        el.style.transition = 'none';
-        el.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
-        requestAnimationFrame(function () {
-          el.style.transition = '';
-          el.style.transform = '';
-        });
-      });
+    /* Everything not in this window is parked just beyond the rim at zero
+       opacity, on its own ray — so when it returns it drifts inward from
+       off-panel rather than popping into existence. */
+    Object.keys(nodes).forEach(function (term) {
+      if (term in present) return;
+      var el = nodes[term];
+      var theta = Number(el.dataset.a) * Math.PI / 180;
+      el.style.transform = 'translate(-50%,-50%) translate('
+        + (Math.cos(theta) * rx * 1.18).toFixed(1) + 'px,'
+        + (Math.sin(theta) * ry * 1.18).toFixed(1) + 'px)';
+      el.style.opacity = '0';
+      el.style.zIndex = '0';
+      el.dataset.n = 0;
+      el.setAttribute('aria-hidden', 'true');
+      el.style.pointerEvents = 'none';
+    });
+
+    if (!animate) {
+      /* First paint: skip the transition so it does not fly in from the origin. */
+      cloud.classList.add('no-anim');
+      void cloud.offsetWidth;
+      requestAnimationFrame(function () { cloud.classList.remove('no-anim'); });
     }
 
     describe(w);
   }
 
-  /* Exiting words are lifted out of the flow at their last position and faded,
-     so their departure doesn't shove the surviving words sideways. */
-  function exit(el, rect) {
-    if (!rect || reduce) { el.remove(); return; }
-    var box = cloud.getBoundingClientRect();
-    el.classList.add('is-out');
-    el.style.left = (rect.left - box.left) + 'px';
-    el.style.top = (rect.top - box.top) + 'px';
-    setTimeout(function () { el.remove(); }, 240);
+  /**
+   * Nudge overlapping words apart.
+   *
+   * Fixed angles guarantee smooth travel but guarantee nothing about spacing —
+   * two terms can share almost the same ray and sit on top of each other. A few
+   * iterations of pushing overlapping boxes apart fixes that, and because the
+   * input positions only change a little between frames, the relaxed output
+   * changes a little too. So this stays smooth; it does not jitter.
+   *
+   * Bigger words win: displacement is weighted by the other word's prominence,
+   * so a peripheral term gives way to a central one rather than shoving it off
+   * its ray.
+   */
+  function relax(list) {
+    for (var pass = 0; pass < 7; pass++) {
+      var moved = false;
+      for (var i = 0; i < list.length; i++) {
+        for (var j = i + 1; j < list.length; j++) {
+          var a = list[i], b = list[j];
+          var dx = b.x - a.x, dy = b.y - a.y;
+          var ox = (a.hw + b.hw + 7) - Math.abs(dx);
+          var oy = (a.hh + b.hh + 5) - Math.abs(dy);
+          if (ox <= 0 || oy <= 0) continue;
+
+          moved = true;
+          /* Separate along whichever axis needs the least movement. */
+          var wa = b.p + 0.15, wb = a.p + 0.15;
+          var tot = wa + wb;
+          if (ox < oy) {
+            var sx = (dx < 0 ? -1 : 1) * ox;
+            a.x -= sx * (wa / tot); b.x += sx * (wb / tot);
+          } else {
+            var sy = (dy < 0 ? -1 : 1) * oy;
+            a.y -= sy * (wa / tot); b.y += sy * (wb / tot);
+          }
+        }
+      }
+      if (!moved) break;
+    }
+    /* Keep everything inside the panel after all that shoving. */
+    list.forEach(function (o) {
+      o.x = Math.max(-rx - 40, Math.min(rx + 40, o.x));
+      o.y = Math.max(-ry, Math.min(ry, o.y));
+    });
   }
 
   function bindTip(el) {
     if (!tip) return;
     el.addEventListener('mouseenter', function () {
-      tip.textContent = el.dataset.t + ' · ' + el.dataset.n + ' mentions';
+      if (!Number(el.dataset.n)) return;
+      tip.textContent = el.dataset.t + ' · ' + el.dataset.n + ' of ' + windows[at].papers + ' titles';
       tip.hidden = false;
     });
     el.addEventListener('mousemove', function (ev) {
@@ -181,14 +270,13 @@
     el.addEventListener('mouseleave', function () { tip.hidden = true; });
   }
 
-  /* The cloud itself is unreadable to a screen reader, so the same numbers are
+  /* The cloud is unreadable to a screen reader, so the same figures are
      published as a table and the region carries a plain-language summary. */
   function describe(w) {
     var top = w.terms.slice().sort(function (a, b) { return b.n - a.n; });
     cloud.setAttribute('aria-label',
-      'Most frequent terms in Brain Lab paper abstracts, ' + w.from + ' to ' + w.to
-      + '. Leading terms: ' + top.slice(0, 8).map(function (t) { return t.t; }).join(', ') + '.');
-
+      'Most frequent terms in Brain Lab paper titles, ' + w.from + ' to ' + w.to
+      + '. Leading terms: ' + top.slice(0, 6).map(function (t) { return t.t; }).join(', ') + '.');
     if (!tableBody) return;
     tableBody.innerHTML = top.map(function (t) {
       return '<tr><td>' + esc(t.t) + '</td><td>' + t.n + '</td></tr>';
@@ -197,8 +285,5 @@
 
   function esc(s) {
     return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  }
-  function cssEscape(s) {
-    return String(s).replace(/["\\]/g, '\\$&');
   }
 })();

@@ -71,36 +71,58 @@ site-wide and you have to change it there too, or this page drifts.
 
 ## The topic cloud
 
-The animated cloud at the bottom of `research.html` is built from the abstracts
-OpenAlex holds for the lab's papers (88% of them have one).
+The animated cloud at the bottom of `research.html` is built from the lab's paper
+titles.
 
 ```bash
 node tools/fetch-topics.mjs      # writes assets/data/topics.json
 ```
 
-Same monthly workflow regenerates it. The page reads the JSON at runtime;
-`assets/js/topics.js` does the rendering.
+Same monthly workflow regenerates it. `assets/js/topics.js` renders it.
 
-**Why four-year windows and not years.** A single year is 2–12 papers, which is
-far too few to read as a trend — the cloud would just flicker. Overlapping
-four-year windows smooth that out without hiding the drift.
+**Titles, not abstracts.** Abstracts give ten times the words but nearly all of
+them are prose scaffolding; a title is already the author's compression of the
+work down to its subject. Switching cut the vocabulary from 121 terms to 51, and
+every one of those is now an actual topic.
 
-**Size is the only data encoding.** Colour carries nothing. An earlier version
-coloured terms by rising/falling, but a teal dark enough to read as text on the
-pale background lands within ΔE 9 of the neutral grey — indistinguishable even
-with full colour vision, let alone with a colour-vision deficiency. The animation
-already communicates change, so colour was dropped rather than faked.
+**The window slides by paper, not by year.** It holds twenty consecutive papers
+and advances one at a time, so consecutive frames differ by one paper in and one
+out. Year-stepping gave 13 frames and looked like a slideshow; paper-stepping
+gives 69 and reads as continuous drift. Windows straddle year boundaries as a
+side effect, which is fine — publication years are an accident of review cycles.
 
-**Two things in the generator worth not breaking:**
+**The layout is polar, and radius is a real encoding.** Each term owns one fixed
+angle for the whole animation and only ever moves along that ray: near the centre
+while it is central to the work, drifting outward and fading as it leaves. The
+fixed angle is what lets the eye track a term across fifteen years.
 
-*Plurals* are folded into singulars only when the singular already appears in the
-corpus on its own. Blind `s`-stripping turns "bias" into "bia".
+**Four things that will bite if you change them:**
 
-*Unigrams* are dropped when a bigram containing them accounts for ≥40% of their
-uses, so "neural" gives way to "neural network". Loosen that and the cloud shows
-the same topic two or three times.
+*Radius comes from rank, not raw count.* A twenty-title window yields counts like
+2, 2, 2, 3, 9 — normalise those directly and every term lands in a knot at the
+centre using a third of the panel. Rank spreads them evenly however compressed
+the counts are. Exact counts still appear in the tooltip and the table.
 
-If you add a term to the stopword list, put it in the second group in
+*Bigrams only form from words adjacent in the original title.* Stopword removal
+pulls survivors together, so "Thermal Profiling **of** CMOS" would otherwise
+produce the phantom bigram "profiling cmos". `tokenize()` keeps each word's
+original index for exactly this reason.
+
+*Plurals fold into singulars only when the singular already occurs in the corpus.*
+Blind `s`-stripping turns "bias" into "bia".
+
+*Words are absolutely positioned so they cannot reflow each other.* That is what
+makes it safe to transition `font-size`. In the earlier flow layout, animating
+size reflowed the container mid-transition, so the FLIP measurement read stale
+geometry and words piled on top of one another.
+
+**Colour carries no data**, here or in the publication list. Size and radius
+already encode frequency, and the two site accents are not separable enough as
+text on the pale background to encode anything a reader could decode — a teal
+dark enough to pass contrast lands within ΔE 9 of neutral grey, indistinguishable
+even with full colour vision.
+
+To suppress a word, add it to the second group of the stopword list in
 `tools/fetch-topics.mjs` — the one for academic boilerplate, not English filler.
 
 ---

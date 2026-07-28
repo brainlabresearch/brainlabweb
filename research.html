@@ -95,7 +95,39 @@
     </div>
   </div>
 
-  <p style="margin-top:34px"><a class="btn-line" href="https://scholar.google.com/citations?hl=en&user=YnhtWqYAAAAJ&view_op=list_works&sortby=pubdate">Publications on Google Scholar</a></p>
+  <p style="margin-top:34px"><a class="btn-line" href="publications.html">All publications</a></p>
+</section>
+
+<section class="sec wrap reveal" id="topics">
+  <div class="sec-head">
+    <div class="eyebrow">Topic drift</div>
+    <h2>Fifteen years of abstracts, in motion</h2>
+  </div>
+  <p style="max-width:62ch;margin:0 0 4px">Every term the lab has published, counted across four-year windows.
+    Bigger means more frequent; press play and the emphasis moves — from CMOS logic and thermal modelling,
+    through reservoir computing, to today's work on neuromorphic hardware and machine learning.</p>
+
+  <!-- Populated by assets/js/topics.js from assets/data/topics.json.
+       Regenerate the data with: node tools/fetch-topics.mjs -->
+  <div class="cloud-wrap" data-topics>
+    <div class="cloud-controls">
+      <button type="button" class="cloud-play" aria-label="Play the topic animation">Play</button>
+      <input type="range" class="cloud-scrub" min="0" max="0" value="0" step="1"
+             aria-label="Time window">
+      <div class="cloud-window"></div>
+    </div>
+    <p class="cloud-status" hidden>Topic data could not be loaded.</p>
+    <div class="cloud" role="img" aria-label="Topic cloud"></div>
+    <div class="cloud-tip" hidden></div>
+    <details class="cloud-table">
+      <summary>View as table</summary>
+      <table>
+        <caption class="skip">Term frequencies for the selected window</caption>
+        <thead class="skip"><tr><th>Term</th><th>Mentions</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </details>
+  </div>
 </section>
 </main>
 
@@ -125,5 +157,6 @@
 </footer>
 
 <script src="assets/js/site.js"></script>
+<script src="assets/js/topics.js"></script>
 </body>
 </html>

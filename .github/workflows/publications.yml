@@ -1,9 +1,10 @@
-# Regenerates publications.html from OpenAlex and commits it if anything changed.
-# Runs monthly, and on demand from the Actions tab (Run workflow).
+# Regenerates the two generated artefacts — publications.html and the topic-cloud
+# data — and commits them if anything changed. Runs monthly, and on demand from
+# the Actions tab (Run workflow).
 #
 # If nothing changed, no commit is made and nothing redeploys.
 
-name: Refresh publications
+name: Refresh publications and topics
 
 on:
   schedule:
@@ -24,17 +25,20 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Fetch from OpenAlex
+      - name: Rebuild publications page
         run: node tools/fetch-publications.mjs
+
+      - name: Rebuild topic-cloud data
+        run: node tools/fetch-topics.mjs
 
       - name: Commit if changed
         run: |
-          if git diff --quiet -- publications.html; then
-            echo "No change to publications.html."
+          if git diff --quiet -- publications.html assets/data/topics.json; then
+            echo "Nothing changed."
             exit 0
           fi
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add publications.html
-          git commit -m "Refresh publications from OpenAlex"
+          git add publications.html assets/data/topics.json
+          git commit -m "Refresh publications and topics from OpenAlex"
           git push

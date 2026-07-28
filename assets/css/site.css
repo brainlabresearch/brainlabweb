@@ -150,6 +150,59 @@ a{color:inherit}
 .news-item:hover .arrow{color:var(--excite);transform:translateX(4px)}
 @media(max-width:700px){.news-item{grid-template-columns:1fr}.news-item .arrow{display:none}}
 
+/* ---------- topic cloud ----------
+   Size encodes term frequency; motion across windows encodes change. The words
+   carry no colour data on purpose — the accent is spent on the controls only. */
+.cloud-wrap{position:relative;margin-top:26px}
+.cloud-controls{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+.cloud-play{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  background:var(--graphite);color:var(--paper);border:0;padding:9px 18px;cursor:pointer;min-width:86px}
+.cloud-play:hover{background:var(--excite)}
+.cloud-scrub{flex:1;min-width:170px;accent-color:var(--excite);cursor:pointer}
+.cloud-window{font-family:var(--mono);font-size:11.5px;color:var(--muted);display:flex;gap:12px;align-items:baseline}
+.cloud-window b{font-size:14px;color:var(--graphite);letter-spacing:.02em}
+
+/* align-items:center, not baseline — baseline with font sizes ranging 13px to
+   46px drags the small words down onto the descenders of the large ones and the
+   rows read as ragged. Generous row gap for the same reason. */
+.cloud{position:relative;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;
+  gap:12px 20px;min-height:270px;padding:30px 14px;background:var(--paper-2);
+  /* A narrower size range than looks exciting on paper. The wider the range, the
+     more the line-wrap points move between frames, and every moved wrap point is
+     a row of words sliding across each other. */
+  --wmin:15px;--wmax:39px}
+.cloud .w{--s:.5;display:inline-block;font-family:var(--display);font-weight:600;letter-spacing:-.02em;
+  line-height:1;color:var(--graphite);
+  font-size:calc(var(--wmin) + (var(--wmax) - var(--wmin)) * var(--s));
+  opacity:calc(.52 + .48 * var(--s));
+  /* font-size is deliberately NOT transitioned. Animating it reflows the row on
+     every frame, so the FLIP measurement below reads each word at its old size,
+     computes the wrong delta, and lands everything on top of everything else.
+     Size snaps; only position and opacity animate. */
+  transition:transform .3s cubic-bezier(.25,.8,.35,1),opacity .26s ease;
+  will-change:transform;
+  cursor:default}
+.cloud .w:hover{color:var(--excite);opacity:1}
+.cloud .w.is-new{opacity:0;transform:scale(.82)}
+/* Departing words leave the flow so they don't shove survivors, but that means
+   they briefly sit on top of them. Fading fast keeps the overlap from reading
+   as a collision. */
+.cloud .w.is-out{position:absolute;opacity:0;transform:scale(.7);pointer-events:none;
+  transition:transform .22s ease,opacity .22s ease}
+.cloud-failed .cloud{min-height:0;padding:18px}
+
+.cloud-tip{position:absolute;transform:translate(-50%,-100%);background:var(--graphite);color:var(--paper);
+  font-family:var(--mono);font-size:11px;padding:5px 9px;pointer-events:none;white-space:nowrap;z-index:5}
+.cloud-status{font-family:var(--mono);font-size:12px;color:var(--muted)}
+
+.cloud-table{margin-top:16px;font-family:var(--mono);font-size:12px}
+.cloud-table summary{cursor:pointer;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;font-size:10.5px}
+.cloud-table table{border-collapse:collapse;margin-top:12px;width:100%;max-width:420px}
+.cloud-table td{padding:3px 0;border-bottom:1px dotted var(--rule)}
+.cloud-table td:last-child{text-align:right;color:var(--muted)}
+
+@media(max-width:700px){.cloud{--wmax:28px;min-height:230px;gap:4px 11px}}
+
 /* ---------- publications ---------- */
 .pub-year{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--excite);margin:44px 0 0;padding-top:14px;border-top:1px solid var(--rule)}
 .pub-year:first-of-type{margin-top:0}

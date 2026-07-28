@@ -69,6 +69,42 @@ site-wide and you have to change it there too, or this page drifts.
 
 ---
 
+## The topic cloud
+
+The animated cloud at the bottom of `research.html` is built from the abstracts
+OpenAlex holds for the lab's papers (88% of them have one).
+
+```bash
+node tools/fetch-topics.mjs      # writes assets/data/topics.json
+```
+
+Same monthly workflow regenerates it. The page reads the JSON at runtime;
+`assets/js/topics.js` does the rendering.
+
+**Why four-year windows and not years.** A single year is 2–12 papers, which is
+far too few to read as a trend — the cloud would just flicker. Overlapping
+four-year windows smooth that out without hiding the drift.
+
+**Size is the only data encoding.** Colour carries nothing. An earlier version
+coloured terms by rising/falling, but a teal dark enough to read as text on the
+pale background lands within ΔE 9 of the neutral grey — indistinguishable even
+with full colour vision, let alone with a colour-vision deficiency. The animation
+already communicates change, so colour was dropped rather than faked.
+
+**Two things in the generator worth not breaking:**
+
+*Plurals* are folded into singulars only when the singular already appears in the
+corpus on its own. Blind `s`-stripping turns "bias" into "bia".
+
+*Unigrams* are dropped when a bigram containing them accounts for ≥40% of their
+uses, so "neural" gives way to "neural network". Loosen that and the cloud shows
+the same topic two or three times.
+
+If you add a term to the stopword list, put it in the second group in
+`tools/fetch-topics.mjs` — the one for academic boilerplate, not English filler.
+
+---
+
 ## Deploying to GitHub Pages
 
 1. Create an **organisation** (`brainlabresearch`, to match the domain) rather

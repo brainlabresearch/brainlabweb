@@ -96,6 +96,17 @@ angle for the whole animation and only ever moves along that ray: near the centr
 while it is central to the work, drifting outward and fading as it leaves. The
 fixed angle is what lets the eye track a term across fifteen years.
 
+**Motion is continuous, not stepped.** The window index is a float advanced every
+animation frame and positions are interpolated between the two windows either
+side of it. It deliberately does not use CSS transitions: retargeting a
+transition mid-flight restarts its easing curve, so the words re-accelerated from
+a standstill several times a second, which is what made an early version choppy.
+`SPEED` at the top of the file is the one pacing knob.
+
+**There is no play control.** The timeline is inside the panel — the year range
+bottom-left and a hairline filling along the bottom edge — and hovering or
+focusing the cloud pauses it. It also stops entirely when scrolled out of view.
+
 **Four things that will bite if you change them:**
 
 *Radius comes from rank, not raw count.* A twenty-title window yields counts like
@@ -111,10 +122,16 @@ original index for exactly this reason.
 *Plurals fold into singulars only when the singular already occurs in the corpus.*
 Blind `s`-stripping turns "bias" into "bia".
 
-*Words are absolutely positioned so they cannot reflow each other.* That is what
-makes it safe to transition `font-size`. In the earlier flow layout, animating
-size reflowed the container mid-transition, so the FLIP measurement read stale
-geometry and words piled on top of one another.
+*Words are absolutely positioned so they cannot reflow each other.* In the earlier
+flow layout, animating size reflowed the container mid-animation, so position
+measurements read stale geometry and words piled on top of one another.
+
+*The collision solver is tuned for a wide, short panel.* It prefers separating
+words horizontally and clamps to the panel on every pass. Separating along
+whichever axis needs the smaller push — the obvious rule — picks vertical almost
+every time here, because the boxes are wider than they are tall and vertical is
+the direction with no room. Clamping only after the loop is just as bad: words
+pushed past the edge get slammed back onto whatever they were separated from.
 
 **Colour carries no data**, here or in the publication list. Size and radius
 already encode frequency, and the two site accents are not separable enough as

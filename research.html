@@ -44,14 +44,13 @@
      regenerate the data with: node tools/fetch-topics.mjs -->
 <section class="wrap cloud-sec" id="topics">
   <div class="cloud-wrap" data-topics>
-    <div class="cloud-controls">
-      <button type="button" class="cloud-play" aria-label="Play the topic animation">Play</button>
-      <input type="range" class="cloud-scrub" min="0" max="0" value="0" step="1"
-             aria-label="Time window">
-      <div class="cloud-window"></div>
-    </div>
     <p class="cloud-status" hidden>Topic data could not be loaded.</p>
-    <div class="cloud" role="img" aria-label="Topic cloud"></div>
+    <!-- tabindex so keyboard users can reach it; focusing pauses the drift the
+         same way hovering does, since there is no play control. -->
+    <div class="cloud" role="img" aria-label="Topic cloud" tabindex="0">
+      <div class="cloud-meta"></div>
+      <div class="cloud-progress"><i></i></div>
+    </div>
     <div class="cloud-tip" hidden></div>
   </div>
 </section>

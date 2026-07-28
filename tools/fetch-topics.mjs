@@ -31,7 +31,7 @@ const CONFIG = {
   minYear: 2011,
   windowPapers: 20, // papers held in the window at once
   stepPapers: 1,    // papers advanced per frame — 1 is what makes it smooth
-  termsPerWindow: 18,
+  termsPerWindow: 12,
   minTermLength: 4,
 };
 

@@ -24,9 +24,8 @@
   if (!root) return;
 
   var cloud = root.querySelector('.cloud');
-  var playBtn = root.querySelector('.cloud-play');
-  var scrub = root.querySelector('.cloud-scrub');
-  var label = root.querySelector('.cloud-window');
+  var meta = root.querySelector('.cloud-meta');
+  var bar = root.querySelector('.cloud-progress i');
   var status = root.querySelector('.cloud-status');
   var tip = root.querySelector('.cloud-tip');
 
@@ -44,6 +43,7 @@
   var layouts = [];        /* layouts[windowIndex][term] = {x,y,fs,op} */
   var pos = 0;             /* float window index */
   var playing = false;
+  var onScreen = false;
   var raf = null;
   var lastT = 0;
   var rx = 0, ry = 0;
@@ -154,18 +154,28 @@
    * rather than shoving it off its ray.
    */
   function relax(list) {
-    for (var pass = 0; pass < 8; pass++) {
+    /* The panel is wide and short, so there is far more slack sideways than
+       vertically. Two corrections follow from that:
+
+       - Prefer horizontal separation. Picking whichever axis needs the smaller
+         push (the obvious rule) almost always picks vertical here, because the
+         boxes are wider than they are tall — and vertical is exactly the
+         direction with no room.
+       - Clamp inside the loop, not after it. Clamping only at the end undoes the
+         solver's work: words pushed past the edge get slammed back on top of
+         whatever they were separated from. */
+    for (var pass = 0; pass < 26; pass++) {
       var moved = false;
       for (var i = 0; i < list.length; i++) {
         for (var j = i + 1; j < list.length; j++) {
           var a = list[i], b = list[j];
           var dx = b.x - a.x, dy = b.y - a.y;
-          var ox = (a.hw + b.hw + 8) - Math.abs(dx);
+          var ox = (a.hw + b.hw + 9) - Math.abs(dx);
           var oy = (a.hh + b.hh + 6) - Math.abs(dy);
           if (ox <= 0 || oy <= 0) continue;
           moved = true;
           var wa = b.p + 0.15, wb = a.p + 0.15, tot = wa + wb;
-          if (ox < oy) {
+          if (ox < oy * 2.6) {
             var sx = (dx < 0 ? -1 : 1) * ox;
             a.x -= sx * (wa / tot); b.x += sx * (wb / tot);
           } else {
@@ -174,42 +184,42 @@
           }
         }
       }
+      for (var k = 0; k < list.length; k++) {
+        var o = list[k];
+        o.x = Math.max(-rx - 60, Math.min(rx + 60, o.x));
+        o.y = Math.max(-ry, Math.min(ry, o.y));
+      }
       if (!moved) break;
     }
-    list.forEach(function (o) {
-      o.x = Math.max(-rx - 46, Math.min(rx + 46, o.x));
-      o.y = Math.max(-ry, Math.min(ry, o.y));
-    });
   }
 
   function start() {
     root.classList.add('cloud-ready');
-    scrub.max = String(windows.length - 1);
-    scrub.step = '0.01';
-    scrub.value = '0';
     draw();
 
-    scrub.addEventListener('input', function () {
-      stop();
-      pos = Number(scrub.value);
-      draw();
-    });
-    playBtn.addEventListener('click', function () { playing ? stop() : go(); });
+    /* No play control, so pausing has to come from attention: hovering or
+       focusing holds the current window still long enough to read it. */
+    cloud.addEventListener('mouseenter', stop);
+    cloud.addEventListener('mouseleave', function () { if (onScreen) go(); });
+    cloud.addEventListener('focus', stop);
+    cloud.addEventListener('blur', function () { if (onScreen) go(); });
 
-    if (!reduce && 'IntersectionObserver' in window) {
-      var io = new IntersectionObserver(function (entries) {
-        entries.forEach(function (e) { if (e.isIntersecting) { go(); io.disconnect(); } });
-      }, { threshold: 0.25 });
-      io.observe(root);
-    }
+    if (reduce) return;
+    if (!('IntersectionObserver' in window)) { onScreen = true; go(); return; }
+    /* Toggle rather than disconnect: no reason to burn frames on a section
+       that has scrolled out of view. */
+    new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        onScreen = e.isIntersecting;
+        onScreen ? go() : stop();
+      });
+    }, { threshold: 0.2 }).observe(cloud);
   }
 
   function go() {
     if (playing) return;
     playing = true;
     lastT = 0;
-    playBtn.textContent = 'Pause';
-    playBtn.setAttribute('aria-label', 'Pause the topic animation');
     raf = requestAnimationFrame(tick);
   }
 
@@ -217,8 +227,6 @@
     if (!playing) return;
     playing = false;
     cancelAnimationFrame(raf);
-    playBtn.textContent = 'Play';
-    playBtn.setAttribute('aria-label', 'Play the topic animation');
   }
 
   function tick(now) {
@@ -227,7 +235,6 @@
     var dt = Math.min((now - lastT) / 1000, 0.1);
     lastT = now;
     pos = (pos + dt * SPEED) % windows.length;
-    scrub.value = String(pos);
     draw();
     raf = requestAnimationFrame(tick);
   }
@@ -272,8 +279,8 @@
     }
 
     var w = windows[e < 0.5 ? i0 : i1];
-    label.innerHTML = '<b>' + w.from + '–' + w.to + '</b><span>' + w.papers + ' papers</span>';
-    scrub.setAttribute('aria-valuetext', w.from + ' to ' + w.to);
+    meta.innerHTML = '<b>' + w.from + '–' + w.to + '</b><span>' + w.papers + ' papers</span>';
+    bar.style.width = (100 * pos / (windows.length - 1)).toFixed(2) + '%';
     describe(w);
   }
 

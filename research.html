@@ -39,6 +39,23 @@
 </header>
 
 <main id="main">
+
+<!-- Topic cloud. Populated by assets/js/topics.js from assets/data/topics.json;
+     regenerate the data with: node tools/fetch-topics.mjs -->
+<section class="wrap cloud-sec" id="topics">
+  <div class="cloud-wrap" data-topics>
+    <div class="cloud-controls">
+      <button type="button" class="cloud-play" aria-label="Play the topic animation">Play</button>
+      <input type="range" class="cloud-scrub" min="0" max="0" value="0" step="1"
+             aria-label="Time window">
+      <div class="cloud-window"></div>
+    </div>
+    <p class="cloud-status" hidden>Topic data could not be loaded.</p>
+    <div class="cloud" role="img" aria-label="Topic cloud"></div>
+    <div class="cloud-tip" hidden></div>
+  </div>
+</section>
+
 <section class="sec wrap reveal">
 
   <div class="area">
@@ -98,38 +115,6 @@
   <p style="margin-top:34px"><a class="btn-line" href="publications.html">All publications</a></p>
 </section>
 
-<section class="sec wrap reveal" id="topics">
-  <div class="sec-head">
-    <div class="eyebrow">Topic drift</div>
-    <h2>Fifteen years of titles, in motion</h2>
-  </div>
-  <p style="max-width:62ch;margin:0 0 4px">A window of twenty consecutive papers slides forward one paper at a time.
-    Terms sit near the centre while they are central to the work, and drift outward and fade as they
-    leave it — from CMOS memristor circuits and thermal profiling, through reservoir computing and
-    stochastic logic, to today's time-domain neuromorphic hardware.</p>
-
-  <!-- Populated by assets/js/topics.js from assets/data/topics.json.
-       Regenerate the data with: node tools/fetch-topics.mjs -->
-  <div class="cloud-wrap" data-topics>
-    <div class="cloud-controls">
-      <button type="button" class="cloud-play" aria-label="Play the topic animation">Play</button>
-      <input type="range" class="cloud-scrub" min="0" max="0" value="0" step="1"
-             aria-label="Time window">
-      <div class="cloud-window"></div>
-    </div>
-    <p class="cloud-status" hidden>Topic data could not be loaded.</p>
-    <div class="cloud" role="img" aria-label="Topic cloud"></div>
-    <div class="cloud-tip" hidden></div>
-    <details class="cloud-table">
-      <summary>View as table</summary>
-      <table>
-        <caption class="skip">Term frequencies for the selected window</caption>
-        <thead class="skip"><tr><th>Term</th><th>Mentions</th></tr></thead>
-        <tbody></tbody>
-      </table>
-    </details>
-  </div>
-</section>
 </main>
 
 <footer>

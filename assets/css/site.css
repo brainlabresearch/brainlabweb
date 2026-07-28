@@ -152,10 +152,16 @@ a{color:inherit}
 
 /* ---------- topic cloud ----------
    Polar layout: every term keeps one fixed angle and moves only along that ray,
-   inward as it gets more frequent. Absolutely positioned, so words never reflow
-   one another — which is what makes it safe to transition font-size here. */
-.cloud-wrap{position:relative;margin-top:26px}
-.cloud-controls{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+   inward as it becomes more frequent. Absolutely positioned, so words never
+   reflow one another.
+
+   Nothing here transitions. Position, size and opacity are written every frame
+   by requestAnimationFrame in topics.js, interpolating between precomputed
+   per-window layouts. A CSS transition would restart its easing curve each time
+   the target moved, which is what made the earlier version look choppy. */
+.cloud-sec{padding:clamp(30px,4vw,52px) 0 0}
+.cloud-wrap{position:relative}
+.cloud-controls{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:14px}
 .cloud-play{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
   background:var(--graphite);color:var(--paper);border:0;padding:9px 18px;cursor:pointer;min-width:86px}
 .cloud-play:hover{background:var(--excite)}
@@ -163,35 +169,21 @@ a{color:inherit}
 .cloud-window{font-family:var(--mono);font-size:11.5px;color:var(--muted);display:flex;gap:12px;align-items:baseline}
 .cloud-window b{font-size:14px;color:var(--graphite);letter-spacing:.02em}
 
-/* Constrained width: at the full 1220px content measure a dozen words read as
-   scattered rather than as a cloud. */
+/* Short and wide: a banner across the top of the page rather than a panel. */
 .cloud{position:relative;overflow:hidden;background:var(--paper-2);
-  max-width:920px;margin:0 auto;height:clamp(340px,38vw,430px);--wmin:12px;--wmax:38px}
-.cloud .w{--s:0;position:absolute;left:50%;top:50%;white-space:nowrap;
+  height:clamp(230px,21vw,290px);--wmin:12px;--wmax:36px}
+.cloud .w{position:absolute;left:50%;top:50%;white-space:nowrap;
   font-family:var(--display);font-weight:600;letter-spacing:-.02em;line-height:1;
-  color:var(--graphite);opacity:0;
-  font-size:calc(var(--wmin) + (var(--wmax) - var(--wmin)) * var(--s));
-  transition:transform 820ms cubic-bezier(.33,.02,.28,1),
-             font-size 820ms cubic-bezier(.33,.02,.28,1),
-             opacity 620ms ease;
+  color:var(--graphite);opacity:0;font-size:12px;
   will-change:transform,font-size,opacity;cursor:default}
 .cloud .w:hover{color:var(--excite)}
-/* Used for the very first paint so nothing flies in from the centre. */
-.cloud.no-anim .w{transition:none}
 .cloud-failed .cloud{height:auto;padding:18px}
 
 .cloud-tip{position:absolute;transform:translate(-50%,-100%);background:var(--graphite);color:var(--paper);
   font-family:var(--mono);font-size:11px;padding:5px 9px;pointer-events:none;white-space:nowrap;z-index:40}
 .cloud-status{font-family:var(--mono);font-size:12px;color:var(--muted)}
 
-.cloud-table{margin-top:16px;font-family:var(--mono);font-size:12px}
-.cloud-table summary{cursor:pointer;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;font-size:10.5px}
-.cloud-table table{border-collapse:collapse;margin-top:12px;width:100%;max-width:420px}
-.cloud-table td{padding:3px 0;border-bottom:1px dotted var(--rule)}
-.cloud-table td:last-child{text-align:right;color:var(--muted)}
-
-@media(max-width:700px){.cloud{--wmax:26px;--wmin:11px}}
-@media(prefers-reduced-motion:reduce){.cloud .w{transition:none}}
+@media(max-width:700px){.cloud{--wmax:25px;--wmin:11px;height:250px}}
 
 /* ---------- publications ---------- */
 .pub-year{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--excite);margin:44px 0 0;padding-top:14px;border-top:1px solid var(--rule)}

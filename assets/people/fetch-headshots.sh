@@ -10,7 +10,7 @@ get () { curl -fsSL "$2" -o "$1" && echo "  ok  $1" || echo "  MISS $1  <- add m
 
 get will-bottom.jpg        "$S/willimg.jpg?itok=Zbe-juoA"
 get manali-dangarikar.jpg  "$S/manalid.jpg?itok=UY45M3Vl"
-get sanskar-gurappa.jpg    "$S/sanskarg.png?itok=RmfSE3xy"
+get sanskar-gurappa.png    "$S/sanskarg.png?itok=RmfSE3xy"   # genuinely a PNG, not a JPEG
 get hagar-hendy.jpg        "$S/hagar.jpg?h=a7280831&itok=NkW01mXY"
 get maya-kaul.jpg          "$S/mayak.jpg?itok=91DmibcG"
 get ujval-madhu.jpg        "$S/ujvalmadhujpg.jpeg?itok=kaewowhs"

@@ -72,6 +72,10 @@
 
     <!-- Buttons, not links: these open a bio dialog rather than navigating.
          Each one names the dialog it controls via aria-controls. -->
+    <button type="button" class="member" data-bio="bio-aditya-balaji" aria-haspopup="dialog">
+      <div class="avatar"><div class="initials">AB</div><img src="assets/people/aditya-balaji.jpg" alt="" loading="lazy" onerror="this.remove()"></div>
+      <div class="name">Aditya Bharathi Balaji</div><div class="prog">Artificial Intelligence MS</div></button>
+
     <button type="button" class="member" data-bio="bio-hagar-hendy" aria-haspopup="dialog">
       <div class="avatar"><div class="initials">HH</div><img src="assets/people/hagar-hendy.jpg" alt="" loading="lazy" onerror="this.remove()"></div>
       <div class="name">Hagar Hendy</div><div class="prog">Electrical &amp; Computer Engineering PhD</div></button>
@@ -90,6 +94,18 @@
        page behind is inert, all without writing any of that ourselves.
        To add one: copy a block, give it a unique id, and point a member button's
        data-bio at that id. -->
+  <dialog class="bio" id="bio-aditya-balaji" aria-labelledby="bio-aditya-balaji-name">
+    <button type="button" class="bio-x" aria-label="Close">&times;</button>
+    <div class="bio-in">
+      <div class="avatar"><div class="initials">AB</div><img src="assets/people/aditya-balaji.jpg" alt="Aditya Bharathi Balaji" loading="lazy" onerror="this.remove()"></div>
+      <div>
+        <h3 id="bio-aditya-balaji-name">Aditya Bharathi Balaji</h3>
+        <p class="prog">Artificial Intelligence MS</p>
+        <p>Aditya is a second-year master's student in artificial intelligence and a research assistant at RIT, working on spiking neural networks, liquid state machines, and dynamical systems theory.</p>
+      </div>
+    </div>
+  </dialog>
+
   <dialog class="bio" id="bio-hagar-hendy" aria-labelledby="bio-hagar-hendy-name">
     <button type="button" class="bio-x" aria-label="Close">&times;</button>
     <div class="bio-in">

@@ -14,7 +14,16 @@
   addEventListener('resize', onScroll);
 })();
 
-/* Scroll reveal. */
+/* Scroll reveal.
+
+   threshold is 0, NOT a fraction of the element. A fractional threshold is a
+   trap on tall sections: it asks for a percentage of the ELEMENT, so on the
+   publications page — one section 11,235px tall — the old 0.08 demanded 899px
+   of it be visible, more than the viewport itself. The page loaded to blank
+   space and only appeared after scrolling several hundred pixels.
+
+   The negative bottom margin keeps a little of the effect: an element starts its
+   fade once it is ~60px into view rather than the instant its first pixel is. */
 (function () {
   var els = document.querySelectorAll('.reveal');
   if (!els.length || !('IntersectionObserver' in window)) {
@@ -25,8 +34,17 @@
     entries.forEach(function (e) {
       if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
     });
-  }, { threshold: 0.08 });
+  }, { threshold: 0, rootMargin: '0px 0px -60px 0px' });
   Array.prototype.forEach.call(els, function (el) { io.observe(el); });
+
+  /* Safety net: content hidden by CSS must never stay hidden because an observer
+     failed to fire. Anything still unrevealed after a moment gets shown. */
+  setTimeout(function () {
+    Array.prototype.forEach.call(els, function (el) {
+      var b = el.getBoundingClientRect();
+      if (b.top < innerHeight && b.bottom > 0) el.classList.add('in');
+    });
+  }, 1200);
 })();
 
 /* Hero spike raster.

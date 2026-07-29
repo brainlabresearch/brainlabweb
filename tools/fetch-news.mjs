@@ -39,6 +39,11 @@ const CONFIG = {
 /**
  * Items from outside rit.edu, which no scraper will find. Keep newest-first;
  * they are merged with the fetched ones and the whole list re-sorted.
+ *
+ * Set `announce: true` on anything that should be broadcast to LinkedIn and X.
+ * Those items — and only those — end up in feed-announce.xml, which is what the
+ * posting automation watches. Everything still appears on the news page either
+ * way; announce only controls whether it goes out to social.
  */
 const MANUAL = [
   {
@@ -46,8 +51,18 @@ const MANUAL = [
     title: 'Machine learning predicts where the HHL quantum algorithm will pay off',
     url: 'https://quantumzeitgeist.com/quantum-machine-learning-predicts-suitability-of-hhl-algorithm-for-equations/',
     summary: 'Quantum Zeitgeist covers research by Sonia Lopez Alarcon and Cory Merkel, associate professors of computer engineering, with Mark Danza ’25 MS (computer engineering).',
+    announce: false,
   },
 ];
+
+/**
+ * Scraped RIT articles default to NOT being broadcast — they are RIT's stories,
+ * and auto-posting all of them would read as the lab claiming RIT's output.
+ * To broadcast one anyway, paste its URL here.
+ */
+const ANNOUNCE_SCRAPED = new Set([
+  // 'https://www.rit.edu/brainlab/news/some-article-slug',
+]);
 
 const MONTHS = ['january', 'february', 'march', 'april', 'may', 'june',
   'july', 'august', 'september', 'october', 'november', 'december'];
@@ -148,6 +163,7 @@ for (const u of urls) {
     const a = await scrapeArticle(u);
     if (!a.title) { console.warn(`  SKIP (no title) ${u}`); continue; }
     if (!a.date) console.warn(`  no date found for ${u}`);
+    a.announce = ANNOUNCE_SCRAPED.has(u);
     scraped.push(a);
     console.log(`  ${a.date ?? '????-??-??'}  ${a.title.slice(0, 70)}`);
   } catch (e) {
@@ -182,15 +198,15 @@ writeFileSync(NEWS, news);
 const rfc822 = (iso) => new Date(`${iso}T12:00:00Z`).toUTCString();
 const SITE = 'https://www.brainlabresearch.org';
 
-const feed = `<?xml version="1.0" encoding="UTF-8"?>
+const buildFeed = (title, self, list, desc) => `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
 <channel>
-  <title>Brain Lab — News</title>
+  <title>${title}</title>
   <link>${SITE}/news.html</link>
-  <atom:link href="${SITE}/feed.xml" rel="self" type="application/rss+xml"/>
-  <description>News and coverage from the Brain Lab.</description>
+  <atom:link href="${SITE}/${self}" rel="self" type="application/rss+xml"/>
+  <description>${desc}</description>
   <language>en-us</language>
-${all.map((n) => `  <item>
+${list.map((n) => `  <item>
     <title>${esc(n.title)}</title>
     <link>${esc(n.url)}</link>
     <guid isPermaLink="true">${esc(n.url)}</guid>
@@ -200,7 +216,12 @@ ${all.map((n) => `  <item>
 </channel>
 </rss>
 `;
-writeFileSync(resolve(ROOT, 'feed.xml'), feed);
+writeFileSync(resolve(ROOT, 'feed.xml'), buildFeed('Brain Lab — News', 'feed.xml', all, 'News and coverage from the Brain Lab.'));
+
+/* Only the flagged items. This is what the social automation subscribes to, so
+   nothing reaches LinkedIn or X unless it was explicitly opted in. */
+const announced = all.filter((n) => n.announce);
+writeFileSync(resolve(ROOT, 'feed-announce.xml'), buildFeed('Brain Lab — Announcements', 'feed-announce.xml', announced, 'Brain Lab items flagged for broadcast to LinkedIn and X.'));
 
 /* index.html mirrors the newest three. */
 const INDEX = resolve(ROOT, 'index.html');
@@ -211,4 +232,5 @@ home = home.replace(
 );
 writeFileSync(INDEX, home);
 
-console.log(`\nwrote ${all.length} items to news.html, newest 3 to index.html`);
+console.log(`\nwrote ${all.length} items to news.html, feed.xml, newest 3 to index.html`);
+console.log(`      ${announced.length} flagged for broadcast in feed-announce.xml`);

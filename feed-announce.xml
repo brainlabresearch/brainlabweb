@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+<channel>
+  <title>Brain Lab — Announcements</title>
+  <link>https://www.brainlabresearch.org/news.html</link>
+  <atom:link href="https://www.brainlabresearch.org/feed-announce.xml" rel="self" type="application/rss+xml"/>
+  <description>Brain Lab items flagged for broadcast to LinkedIn and X.</description>
+  <language>en-us</language>
+
+</channel>
+</rss>

@@ -236,10 +236,13 @@ there is no image tooling in this repo.
 
 ## The three-thrusts figure
 
-`assets/icons/thrusts.jpg` is the diagram at the top of the research page, with
-three hotspots over its columns paired to three cards below. Hovering or focusing
-either half highlights the other; both link down to the matching detailed section
-(`#area-1`, `#area-2`, `#area-3`).
+`assets/icons/thrusts.jpg` is the diagram at the top of the research page. Three
+percentage-positioned hotspots sit over its columns: hovering or focusing one
+highlights it, clicking jumps to the matching section below (`#area-1`,
+`#area-2`, `#area-3`). They are plain anchors — no JavaScript involved.
+
+The three section headings deliberately match the figure's column labels, so the
+graphic and the prose name the same three things.
 
 `brainlabthrusts.svg` is the original as supplied — an SVG wrapper around a
 single embedded JPEG. The JPEG was extracted out of it because the base64 wrapper
@@ -255,14 +258,12 @@ which is true everywhere it is used.
 and they stop at 84% height — below that is the brace and caption, which belong
 to all three columns rather than any one.
 
-**The figure and the cards share one 880px measure.** That is what makes each
-connector land under its column: at the full content width the cards spread to
-1152px while the figure stays near its native 861px, and only the middle
-connector lines up. Widening the figure instead would upscale a JPEG by a third
-and go soft.
+The figure is capped at 560px, well under the image's native 861px — it is an
+orientation graphic above the real content, not the content itself. Below 620px
+the hotspots are hidden, since they stop being a usable tap target.
 
-Below 760px the hotspots and connectors are hidden and the cards stack — the
-pairing only means anything while the cards sit under their columns.
+`.area` carries a `scroll-margin-top` so an anchor jump does not land with the
+heading hidden behind the fixed nav.
 
 ---
 

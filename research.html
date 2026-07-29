@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Research — Brain Lab</title>
-<meta name="description" content="Memristive devices that emulate biology, energy-efficient network topologies and training algorithms, and the security of neuromorphic computing systems.">
+<meta name="description" content="Neuromorphic devices and circuits, brain-inspired architectures and algorithms, and trustworthy AI hardware.">
 <link rel="canonical" href="https://www.brainlabresearch.org/research.html">
 <meta property="og:title" content="Research — Brain Lab">
 <meta property="og:description" content="Memristors, spiking neural networks, random projection networks, and adversarial robustness in neuromorphic hardware.">
@@ -69,36 +69,16 @@
 
   <!-- The figure is line art on a white ground; mix-blend-mode drops the white
        so it sits on the page rather than in a box. Hotspots are percentage
-       positioned over each column so they track the image as it scales. -->
-  <div class="thrusts" data-thrusts>
+       positioned over each column so they track the image as it scales, and are
+       plain anchors — hovering highlights, clicking jumps to the full section. -->
+  <div class="thrusts">
     <figure class="thrust-fig">
       <img src="assets/icons/thrusts.jpg" width="861" height="693"
            alt="Three research thrusts feeding into one another: neuromorphic devices and circuits, then brain-inspired architectures and algorithms, then trustworthy AI hardware — together producing agile, energy-efficient and trustworthy AI at the edge.">
-      <a class="thrust-hot" data-t="1" href="#area-1" style="left:1%;width:31%"><span class="sr">Neuromorphic devices and circuits</span></a>
-      <a class="thrust-hot" data-t="2" href="#area-2" style="left:34%;width:33%"><span class="sr">Brain-inspired architectures and algorithms</span></a>
-      <a class="thrust-hot" data-t="3" href="#area-3" style="left:70%;width:29%"><span class="sr">Trustworthy AI hardware</span></a>
+      <a class="thrust-hot" href="#area-1" style="left:1%;width:31%"><span class="sr">Neuromorphic devices and circuits</span></a>
+      <a class="thrust-hot" href="#area-2" style="left:34%;width:33%"><span class="sr">Brain-inspired architectures and algorithms</span></a>
+      <a class="thrust-hot" href="#area-3" style="left:70%;width:29%"><span class="sr">Trustworthy AI hardware</span></a>
     </figure>
-
-    <div class="thrust-cards">
-      <a class="thrust-card" data-t="1" href="#area-1">
-        <span class="n">1</span>
-        <h3>Neuromorphic devices and circuits</h3>
-        <p>Beyond-CMOS devices that put synaptic plasticity and spiking directly in hardware — memristors that store and compute in the same element.</p>
-        <span class="go">Read more</span>
-      </a>
-      <a class="thrust-card" data-t="2" href="#area-2">
-        <span class="n">2</span>
-        <h3>Brain-inspired architectures and algorithms</h3>
-        <p>Random projection networks, reservoir computing, and training algorithms designed to run <em>in</em> hardware rather than around it.</p>
-        <span class="go">Read more</span>
-      </a>
-      <a class="thrust-card" data-t="3" href="#area-3">
-        <span class="n">3</span>
-        <h3>Trustworthy AI hardware</h3>
-        <p>How low precision, process variation, and noise change adversarial vulnerability — and what it takes to defend against it.</p>
-        <span class="go">Read more</span>
-      </a>
-    </div>
   </div>
 </section>
 
@@ -118,7 +98,7 @@
       <circle cx="22" cy="58" r="2.2" fill="currentColor" fill-opacity=".4"/>
     </svg>
     <div>
-      <h3>Emerging devices that emulate biology</h3>
+      <h3>Neuromorphic devices and circuits</h3>
       <p>We develop and exploit beyond-CMOS devices to implement AI primitives — synaptic plasticity, neuronal spiking — directly in hardware. Memristors are the main focus: they store data and perform analog multiplication in the same element, collapsing the von Neumann bottleneck that dominates the energy cost of load–compute–store architectures. Most of our work integrates memristors into neuron, synapse, and training circuits, alongside semi-empirical modeling and SPICE model development. We're also interested in three- and four-terminal memristors and biristors for spiking neuron implementation.</p>
       <div class="tags"><span class="tag">Memristors</span><span class="tag">Crossbar arrays</span><span class="tag">SPICE modeling</span><span class="tag">Synaptic circuits</span></div>
     </div>
@@ -136,7 +116,7 @@
       </g>
     </svg>
     <div>
-      <h3>Energy-efficient topologies and training algorithms</h3>
+      <h3>Brain-inspired architectures and algorithms</h3>
       <p>Device randomness is usually treated as a defect. We treat it as a resource. A recurring theme is random projection networks — networks with random weights and topologies that fit a target function by pairing linear regression with a large random feature space, and that need far fewer hardware resources than conventional alternatives. We also design training algorithms tailored to learning <em>in</em> hardware, including stochastic logic that cuts the overhead of gradient computation. Related interests: spiking neural network hardware, energy-harvesting AI, and perturbation-based learning.</p>
       <div class="tags"><span class="tag">Random projection</span><span class="tag">Reservoir computing</span><span class="tag">Stochastic logic</span><span class="tag">In-hardware learning</span></div>
     </div>
@@ -152,7 +132,7 @@
       <circle cx="40" cy="46" r="2.6" fill="none" stroke="#F76902" stroke-width="1.5"/>
     </svg>
     <div>
-      <h3>Trustworthy neuromorphic systems</h3>
+      <h3>Trustworthy AI hardware</h3>
       <p>AI is moving into size-, weight-, and power-constrained places — wearables, phones, robots, UAVs, satellites — and custom neuromorphic hardware is following it there. The security questions have not kept up. Deep networks are famously vulnerable to adversarial attack, yet almost nothing is known about how hardware-specific characteristics (low precision, process variation, defects, noise) change that vulnerability. We work on three fronts: modeling how hardware faults and noise affect adversarial susceptibility, designing adversarially robust training for neuromorphic systems, and developing new attacks that exploit hardware-specific attributes.</p>
       <div class="tags"><span class="tag">Adversarial robustness</span><span class="tag">Side channels</span><span class="tag">Process variation</span><span class="tag">Edge AI security</span></div>
     </div>

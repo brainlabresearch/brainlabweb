@@ -93,26 +93,3 @@
   size(); seed();
   if (reduce) draw(); else requestAnimationFrame(step);
 })();
-
-/* Three thrusts: hovering or focusing a column in the figure lights up its card
-   below, and vice versa. Everything still works without this — the hotspots and
-   cards are plain links to the detailed sections; this only pairs them up. */
-(function () {
-  var root = document.querySelector('[data-thrusts]');
-  if (!root) return;
-
-  var items = root.querySelectorAll('[data-t]');
-  function set(id, on) {
-    Array.prototype.forEach.call(items, function (el) {
-      if (el.dataset.t === id) el.classList.toggle('is-on', on);
-    });
-  }
-
-  Array.prototype.forEach.call(items, function (el) {
-    var id = el.dataset.t;
-    el.addEventListener('mouseenter', function () { set(id, true); });
-    el.addEventListener('mouseleave', function () { set(id, false); });
-    el.addEventListener('focus', function () { set(id, true); });
-    el.addEventListener('blur', function () { set(id, false); });
-  });
-})();

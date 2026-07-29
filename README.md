@@ -341,6 +341,49 @@ mid-word. Summaries are trimmed back to the last complete sentence, or the last
 whole word plus an ellipsis. Sentence detection ignores abbreviations — matching
 a bare `". "` cut *"published on Jan. 22 in Natu"* down to *"published on Jan."*
 
+### feed.xml
+
+The same script writes `feed.xml`, an RSS feed of the news list, linked from
+every page's `<head>` so browsers and readers can discover it.
+
+It deliberately has **no `<lastBuildDate>`**. Stamping the current time would
+rewrite the file on every run, so the monthly workflow's "commit only if
+something changed" check would fire every month and redeploy for nothing. The
+newest item's `pubDate` carries the same information and only moves when the news
+does.
+
+The feed is also the integration point for pushing news out to social platforms —
+see below.
+
+---
+
+## Posting news out to LinkedIn and X
+
+The site is the source of truth; `feed.xml` is what the outside world watches.
+Two ways to wire it up, and the choice hinges on LinkedIn, not X.
+
+**Recommended — a feed watcher.** Point Zapier, Make, or Buffer at
+`https://www.brainlabresearch.org/feed.xml` with an RSS trigger, and have it post
+to the LinkedIn *Page* and X. These services are already approved partners on
+both platforms, so they handle OAuth, token refresh, and LinkedIn's organisation
+posting permission. Nothing about this lives in the repo and no credentials are
+stored here.
+
+**Direct from CI**, if you'd rather not use a third party:
+
+- **X** is workable. Its free API tier still allows writes. A GitHub Action can
+  POST to `/2/tweets` with OAuth 1.0a credentials kept as repository secrets.
+- **LinkedIn is the hard part.** Posting as an *organisation* needs
+  `w_organization_social`, part of the Community Management API, which requires
+  app review and approval. Its tokens also expire every 60 days and refreshing
+  them is interactive — which does not survive an unattended monthly cron.
+
+**One design decision either way.** `news.html` is mostly *scraped from RIT*, so
+auto-posting every new entry would rebroadcast RIT's articles as though they were
+lab announcements. If that isn't wanted, gate it: broadcast only items from the
+`MANUAL` array, or add an `announce: true` flag and emit a separate
+`feed-announce.xml` for the watcher to read.
+
 **Add a page** — drop the `.html` file at the repo root and add it to `sitemap.xml`.
 
 **Change a nav link or the footer** — these are duplicated across all four pages

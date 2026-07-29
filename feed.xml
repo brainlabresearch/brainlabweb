@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+<channel>
+  <title>Brain Lab — News</title>
+  <link>https://www.brainlabresearch.org/news.html</link>
+  <atom:link href="https://www.brainlabresearch.org/feed.xml" rel="self" type="application/rss+xml"/>
+  <description>News and coverage from the Brain Lab.</description>
+  <language>en-us</language>
+  <item>
+    <title>RIT researchers build funding momentum</title>
+    <link>https://www.rit.edu/brainlab/news/rit-researchers-build-funding-momentum</link>
+    <guid isPermaLink="true">https://www.rit.edu/brainlab/news/rit-researchers-build-funding-momentum</guid>
+    <pubDate>Fri, 27 Mar 2026 12:00:00 GMT</pubDate>
+    <description>RIT researchers supported by internal and external funding sources help bring creative and innovative ideas to fruition.</description>
+  </item>
+  <item>
+    <title>Machine learning predicts where the HHL quantum algorithm will pay off</title>
+    <link>https://quantumzeitgeist.com/quantum-machine-learning-predicts-suitability-of-hhl-algorithm-for-equations/</link>
+    <guid isPermaLink="true">https://quantumzeitgeist.com/quantum-machine-learning-predicts-suitability-of-hhl-algorithm-for-equations/</guid>
+    <pubDate>Fri, 30 May 2025 12:00:00 GMT</pubDate>
+    <description>Quantum Zeitgeist covers research by Sonia Lopez Alarcon and Cory Merkel, associate professors of computer engineering, with Mark Danza ’25 MS (computer engineering).</description>
+  </item>
+  <item>
+    <title>New research shows AI systems are getting closer to processing information like humans</title>
+    <link>https://www.rit.edu/brainlab/news/new-research-shows-ai-systems-are-getting-closer-processing-information-humans</link>
+    <guid isPermaLink="true">https://www.rit.edu/brainlab/news/new-research-shows-ai-systems-are-getting-closer-processing-information-humans</guid>
+    <pubDate>Wed, 22 Jan 2025 12:00:00 GMT</pubDate>
+    <description>RIT engineering professor Cory Merkel was one of more than a dozen researchers in neuromorphic computing contributing findings published on Jan. 22 in…</description>
+  </item>
+  <item>
+    <title>Student spotlight: Fulbright student’s research applies AI to real-world problems</title>
+    <link>https://www.rit.edu/brainlab/news/student-spotlight-fulbright-students-research-applies-ai-real-world-problems</link>
+    <guid isPermaLink="true">https://www.rit.edu/brainlab/news/student-spotlight-fulbright-students-research-applies-ai-real-world-problems</guid>
+    <pubDate>Fri, 13 Dec 2024 12:00:00 GMT</pubDate>
+    <description>Diana Velychko, a Fulbright master’s student in artificial intelligence, is paving the way for more intuitive artificial intelligence (AI) systems. Her work focuses on the intersection of human perception and AI, aiming to bridge the gap between how people see the world and how machines interpret it.</description>
+  </item>
+  <item>
+    <title>RIT professor proposes new way to make artificial intelligence smarter and greener</title>
+    <link>https://www.rit.edu/brainlab/news/rit-professor-proposes-new-way-make-artificial-intelligence-smarter-and-greener</link>
+    <guid isPermaLink="true">https://www.rit.edu/brainlab/news/rit-professor-proposes-new-way-make-artificial-intelligence-smarter-and-greener</guid>
+    <pubDate>Fri, 08 Nov 2024 12:00:00 GMT</pubDate>
+    <description>RIT Assistant Professor Alexander Ororbia published a paper on smarter and greener artificial intelligence in Science Advances.</description>
+  </item>
+  <item>
+    <title>Computer engineering faculty member joins national initiative on neuromorphic computing</title>
+    <link>https://www.rit.edu/brainlab/news/computer-engineering-faculty-member-joins-national-initiative-neuromorphic-computing</link>
+    <guid isPermaLink="true">https://www.rit.edu/brainlab/news/computer-engineering-faculty-member-joins-national-initiative-neuromorphic-computing</guid>
+    <pubDate>Mon, 19 Feb 2024 12:00:00 GMT</pubDate>
+    <description>RIT computer engineering faculty member contributes system testing expertise to USC’s Center of Neuromorphic Computing under Extreme Environments.</description>
+  </item>
+  <item>
+    <title>Computer engineering becomes part of inaugural program focused on neuromorphic technologies</title>
+    <link>https://www.rit.edu/brainlab/news/computer-engineering-becomes-part-inaugural-program-focused-neuromorphic-technologies</link>
+    <guid isPermaLink="true">https://www.rit.edu/brainlab/news/computer-engineering-becomes-part-inaugural-program-focused-neuromorphic-technologies</guid>
+    <pubDate>Mon, 12 Dec 2022 12:00:00 GMT</pubDate>
+    <description>RIT recently became one of the inaugural academic partners in the BrainChip University AI Accelerator Program. As part of the partnership, RIT’s computer engineering program will receive hardware as well as lecture modules for classes detailing how the novel chips can be programmed and used to provide neuromorphic computing solutions to real-world problems.</description>
+  </item>
+  <item>
+    <title>Engineering faculty member wins Air Force Research grant for work in improvements to neuromorphic computing systems</title>
+    <link>https://www.rit.edu/brainlab/news/engineering-faculty-member-wins-air-force-research-grant-work-improvements-neuromorphic</link>
+    <guid isPermaLink="true">https://www.rit.edu/brainlab/news/engineering-faculty-member-wins-air-force-research-grant-work-improvements-neuromorphic</guid>
+    <pubDate>Fri, 08 Jan 2021 12:00:00 GMT</pubDate>
+    <description>Faculty-researcher Cory Merkel recently received a grant from the Air Force Research Lab for developing more secure AI functionality including how it defends against system attacks, and, through training the system, how it could learn to anticipate triggers for possible system attacks.</description>
+  </item>
+</channel>
+</rss>

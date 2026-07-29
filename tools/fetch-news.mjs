@@ -169,6 +169,39 @@ news = news.replace(
 );
 writeFileSync(NEWS, news);
 
+/* feed.xml — the machine-readable copy of the same list.
+ *
+ * Worth having for its own sake, but it is also the hook for automation: a
+ * service watching this feed can post new items to LinkedIn and X without any
+ * platform API credentials living in this repo.
+ *
+ * NOTE the absence of <lastBuildDate>. Stamping the current time would rewrite
+ * the file on every run, so the monthly workflow's "commit only if something
+ * changed" check would fire every month and redeploy for nothing. The newest
+ * item's date carries the same information and only moves when the news does. */
+const rfc822 = (iso) => new Date(`${iso}T12:00:00Z`).toUTCString();
+const SITE = 'https://www.brainlabresearch.org';
+
+const feed = `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+<channel>
+  <title>Brain Lab — News</title>
+  <link>${SITE}/news.html</link>
+  <atom:link href="${SITE}/feed.xml" rel="self" type="application/rss+xml"/>
+  <description>News and coverage from the Brain Lab.</description>
+  <language>en-us</language>
+${all.map((n) => `  <item>
+    <title>${esc(n.title)}</title>
+    <link>${esc(n.url)}</link>
+    <guid isPermaLink="true">${esc(n.url)}</guid>
+    <pubDate>${rfc822(n.date)}</pubDate>
+    <description>${esc(n.summary)}</description>
+  </item>`).join('\n')}
+</channel>
+</rss>
+`;
+writeFileSync(resolve(ROOT, 'feed.xml'), feed);
+
 /* index.html mirrors the newest three. */
 const INDEX = resolve(ROOT, 'index.html');
 let home = readFileSync(INDEX, 'utf8');

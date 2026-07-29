@@ -37,8 +37,30 @@ const MARK = '60 -6 253 282';   // circular mark only
 const ON_PAPER = { ink: '#161C24', ground: '#F0F2ED' };
 const ON_INK = { ink: '#F0F2ED', ground: '#0D1522' };
 
+/**
+ * Widen the rectangle that masks the pale half of the mark.
+ *
+ * As exported, that rect is x=1464 y=1009 w=121 h=270 — its left edge sits at
+ * exactly x=1464, which is also the circle's leftmost point, and its bottom at
+ * exactly y=1279, the circle's bottom. Coincident edges do not cancel under
+ * antialiasing: the renderer leaves a hairline of the dark circle showing along
+ * the left and lower-left, which reads as a faint oval outline.
+ *
+ * Measured on a 1200px render: pixel column 33 deviated from the ground colour
+ * by 36/255 before this, and not at all after.
+ *
+ * The right edge must stay at 1585 — that is the split between the two halves,
+ * and pushing it right would eat into the dark side.
+ */
+function patchMask(svg) {
+  return svg.replace(
+    /<rect x="1464" y="1009" width="121" height="270"/,
+    '<rect x="1444" y="989" width="141" height="310"',
+  );
+}
+
 function reframe(svg, box) {
-  return svg
+  return patchMask(svg)
     /* Deliberately no fill="none" on the root: several paths carry no fill at
        all and depend on inheriting the default. Setting none blanks the mark. */
     .replace(/^<svg[^>]*>/, `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="${box}">`)

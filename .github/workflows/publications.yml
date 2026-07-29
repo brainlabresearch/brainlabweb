@@ -4,7 +4,7 @@
 #
 # If nothing changed, no commit is made and nothing redeploys.
 
-name: Refresh publications and topics
+name: Refresh publications, topics, and news
 
 on:
   schedule:
@@ -31,14 +31,17 @@ jobs:
       - name: Rebuild topic-cloud data
         run: node tools/fetch-topics.mjs
 
+      - name: Rebuild news from RIT
+        run: node tools/fetch-news.mjs
+
       - name: Commit if changed
         run: |
-          if git diff --quiet -- publications.html assets/data/topics.json; then
+          if git diff --quiet -- publications.html assets/data/topics.json news.html index.html; then
             echo "Nothing changed."
             exit 0
           fi
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add publications.html assets/data/topics.json
-          git commit -m "Refresh publications and topics from OpenAlex"
+          git add publications.html assets/data/topics.json news.html index.html
+          git commit -m "Refresh publications, topics, and news"
           git push

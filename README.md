@@ -302,8 +302,44 @@ backdrop clicks.
 **Move someone to alumni** — delete their `member` block, add an `alum` row with
 year and thesis title.
 
-**Add news** — copy an `<a class="news-item">` block in `news.html`. Keep the list
-newest-first, and mirror the top three onto `index.html`.
+**Add news** — you usually don't. `news.html` is generated:
+
+```bash
+node tools/fetch-news.mjs
+```
+
+It reads RIT's Brain Lab news index, scrapes each article for title, date, and
+summary, rewrites the list in `news.html`, and mirrors the newest three onto
+`index.html`. Both regions are delimited by `<!-- NEWS:START -->` /
+`<!-- NEWS:END -->` markers; everything outside them is left alone. The monthly
+workflow runs it too.
+
+For a story **not on rit.edu** — press coverage elsewhere — add it to the
+`MANUAL` array in that script. Those are merged with the scraped items and the
+whole list re-sorted by date.
+
+**Why that source and not a search of all RIT news.** There is no clean feed for
+"every RIT article mentioning Cory Merkel":
+
+- rit.edu publishes no RSS — `/news/rss.xml`, `/news/rss` and `/news/feed` all
+  return the ordinary HTML page.
+- There's no author archive; `/news/cory-merkel` returns RIT's generic
+  "Latest News (frontpage)" catch-all.
+- Their site search is JavaScript-driven, so it can't be fetched.
+- Google News RSS does find articles, but a `"Cory Merkel"` query also returns
+  two obituaries for a different Merkel and an ice-hockey report, and restricting
+  to `site:rit.edu` returns mostly directory pages. Its links are opaque
+  `news.google.com` redirects rather than real article URLs.
+
+So the lab's own news index is the source. It's curated and stable, with real
+absolute URLs — but it is a *subset*: anything published elsewhere on rit.edu
+that never got added to the lab's page won't appear. `MANUAL` is the escape
+hatch.
+
+One quirk handled in the script: RIT truncates its own meta descriptions
+mid-word. Summaries are trimmed back to the last complete sentence, or the last
+whole word plus an ellipsis. Sentence detection ignores abbreviations — matching
+a bare `". "` cut *"published on Jan. 22 in Natu"* down to *"published on Jan."*
 
 **Add a page** — drop the `.html` file at the repo root and add it to `sitemap.xml`.
 

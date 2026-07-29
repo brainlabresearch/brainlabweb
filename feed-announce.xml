@@ -6,6 +6,12 @@
   <atom:link href="https://www.brainlabresearch.org/feed-announce.xml" rel="self" type="application/rss+xml"/>
   <description>Brain Lab items flagged for broadcast to LinkedIn and X.</description>
   <language>en-us</language>
-
+  <item>
+    <title>Manali Dangarikar to present at NAECON 2026</title>
+    <link>https://attend.ieee.org/naecon-2026/</link>
+    <guid isPermaLink="true">https://attend.ieee.org/naecon-2026/</guid>
+    <pubDate>Wed, 29 Jul 2026 12:00:00 GMT</pubDate>
+    <description>Manali Dangarikar will present her research, “Understanding fault tolerance of adversarially robust pruned models,” at the 2026 NAECON conference in Cincinnati.</description>
+  </item>
 </channel>
 </rss>

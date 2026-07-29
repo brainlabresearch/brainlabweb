@@ -47,6 +47,16 @@ const CONFIG = {
  */
 const MANUAL = [
   {
+    date: '2026-07-29',
+    title: 'Manali Dangarikar to present at NAECON 2026',
+    url: 'https://attend.ieee.org/naecon-2026/',
+    /* No article of its own — the only link is NAECON, inline in the text. */
+    linkTitle: false,
+    summary: 'Manali Dangarikar will present her research, “Understanding fault tolerance of adversarially robust pruned models,” at the 2026 NAECON conference in Cincinnati.',
+    summaryHtml: 'Manali Dangarikar will present her research, “Understanding fault tolerance of adversarially robust pruned models,” at the 2026 <a href="https://attend.ieee.org/naecon-2026/">NAECON</a> conference in Cincinnati.',
+    announce: true,
+  },
+  {
     date: '2025-05-30',
     title: 'Machine learning predicts where the HHL quantum algorithm will pay off',
     url: 'https://quantumzeitgeist.com/quantum-machine-learning-predicts-suitability-of-hhl-algorithm-for-equations/',
@@ -142,12 +152,31 @@ const fmt = (iso) => {
   return `${Number(d)} ${['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][Number(m) - 1]} ${y}`;
 };
 
-const item = (n) => `  <a class="news-item" href="${esc(n.url)}">
+/**
+ * A card is a <div>, not an <a>.
+ *
+ * It used to wrap the whole card in an anchor, which made it impossible to put a
+ * link inside the summary text — HTML forbids nesting one anchor in another, and
+ * browsers silently break the markup apart if you try. Now the headline carries
+ * the link and CSS stretches its hit area over the whole card, so the card still
+ * behaves as one big click target while inline links in the summary keep working.
+ *
+ * Fields:
+ *   url          where the card and the feed item point
+ *   linkTitle    set false when there is no article to link to, only inline links
+ *   summaryHtml  raw HTML for the page; `summary` stays plain text for the feed
+ */
+const item = (n) => {
+  const body = n.summaryHtml ?? esc(n.summary);
+  const linked = n.url && n.linkTitle !== false;
+  const head = linked ? `<a href="${esc(n.url)}">${esc(n.title)}</a>` : esc(n.title);
+  return `  <div class="news-item">
     <span class="date">${esc(fmt(n.date))}</span>
-    <span><h4>${esc(n.title)}</h4>
-    <p>${esc(n.summary)}</p></span>
-    <span class="arrow">→</span>
-  </a>`;
+    <span><h4>${head}</h4>
+    <p>${body}</p></span>
+    ${linked ? '<span class="arrow">→</span>' : '<span></span>'}
+  </div>`;
+};
 
 /* ---------- run ---------- */
 

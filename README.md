@@ -293,6 +293,11 @@ change the name, initials, programme, and image path. Then copy a
 `<dialog class="bio">` block, give it a unique `id`, and point the button's
 `data-bio` at that id. Drop the photo in `assets/people/`.
 
+**Photos should be square**, ideally 300×300 to match the rest. A non-square file
+still works — the tile is `aspect-ratio:1/1` with `object-fit:cover` — but the
+crop is taken from the *centre*, which on a portrait photo usually slices through
+the top of the head. Crop it yourself and the framing stays under your control.
+
 Member tiles are **buttons, not links** — clicking opens a bio dialog rather than
 navigating to rit.edu. It uses the native `<dialog>` element, so Escape closes
 it, focus is trapped while open, and the page behind is inert without any of that

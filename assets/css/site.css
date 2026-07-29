@@ -48,8 +48,8 @@ a{color:inherit}
    follow currentColor like a single-colour glyph would. Two files, swapped as
    the nav flips from the dark band to the light stuck state. */
 .brand-mark{width:26px;height:29px;flex:0 0 auto;align-self:center;
-  background:url("../icons/mark-dark.svg") center/contain no-repeat}
-.nav.stuck .brand-mark{background-image:url("../icons/mark.svg")}
+  background:url("../icons/mark-dark.svg?v=0295ca7e") center/contain no-repeat}
+.nav.stuck .brand-mark{background-image:url("../icons/mark.svg?v=a999a30c")}
 .nav-links{margin-left:auto;display:flex;gap:26px;align-items:center}
 .nav-links a{font-family:var(--display);font-size:13.5px;font-weight:500;text-decoration:none;color:rgba(255,255,255,.72);padding:4px 0;position:relative;transition:color .35s ease}
 .nav-links a::after{content:"";position:absolute;left:0;right:100%;bottom:0;height:2px;background:var(--excite);transition:right .28s ease}

@@ -430,12 +430,21 @@ across `*.html`.
 node tools/stamp-assets.mjs
 ```
 
-This appends `?v=<hash>` to the stylesheet and script tags in every page. Without
-it, GitHub Pages and the browser will happily serve you a stale stylesheet or
-script against fresh HTML — and the symptom is silent. A new feature simply
-appears not to work, because the code implementing it never loaded. That cost a
-full debugging round on the bio dialogs before this script existed. The hash only
-changes when the file does, so the cache still does its job the rest of the time.
+This appends `?v=<hash>` to every reference to the site's own CSS, JS, and icons
+— in the HTML, in the `url()`s inside `site.css`, and in the absolute `og:image`
+URL. Without it, GitHub Pages and the browser will happily serve stale assets
+against fresh HTML, and the symptom is silent: a fix appears not to have worked
+when it simply has not loaded.
+
+It has bitten twice. Once on the bio dialogs, where a cached `site.js` meant
+clicking a tile did nothing. Once on the logo, where a corrected SVG was live and
+verified while the browser kept serving the old one — which is why icons are
+covered now and not just code.
+
+Icons are stamped before the stylesheet hash is computed, since `site.css`
+references them; doing it the other way round would produce a CSS hash for a
+version of the file that never shipped. The script is idempotent — running it
+twice changes nothing.
 
 ---
 

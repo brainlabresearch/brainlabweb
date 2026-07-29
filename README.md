@@ -234,6 +234,38 @@ there is no image tooling in this repo.
 
 ---
 
+## The three-thrusts figure
+
+`assets/icons/thrusts.jpg` is the diagram at the top of the research page, with
+three hotspots over its columns paired to three cards below. Hovering or focusing
+either half highlights the other; both link down to the matching detailed section
+(`#area-1`, `#area-2`, `#area-3`).
+
+`brainlabthrusts.svg` is the original as supplied — an SVG wrapper around a
+single embedded JPEG. The JPEG was extracted out of it because the base64 wrapper
+was 102 KB against 76 KB for the image itself.
+
+**The white background is dropped with `mix-blend-mode: multiply`,** not by
+keying the image. The figure is black line art on white, and multiply makes the
+white read as whatever is behind it, so the diagram sits on the paper rather than
+in a white box. No transparent PNG needed. It only works over a light ground,
+which is true everywhere it is used.
+
+**Hotspots are positioned in percentages** so they track the image at any width,
+and they stop at 84% height — below that is the brace and caption, which belong
+to all three columns rather than any one.
+
+**The figure and the cards share one 880px measure.** That is what makes each
+connector land under its column: at the full content width the cards spread to
+1152px while the figure stays near its native 861px, and only the middle
+connector lines up. Widening the figure instead would upscale a JPEG by a third
+and go soft.
+
+Below 760px the hotspots and connectors are hidden and the cards stack — the
+pairing only means anything while the cards sit under their columns.
+
+---
+
 ## Headshots
 
 The site expects local images at `assets/people/<first-last>.jpg`, square-ish.

@@ -311,6 +311,19 @@ newest-first, and mirror the top three onto `index.html`.
 on purpose (no build step means nothing can fail to build). Search-and-replace
 across `*.html`.
 
+**After editing anything in `assets/css` or `assets/js`, run:**
+
+```bash
+node tools/stamp-assets.mjs
+```
+
+This appends `?v=<hash>` to the stylesheet and script tags in every page. Without
+it, GitHub Pages and the browser will happily serve you a stale stylesheet or
+script against fresh HTML — and the symptom is silent. A new feature simply
+appears not to work, because the code implementing it never loaded. That cost a
+full debugging round on the bio dialogs before this script existed. The hash only
+changes when the file does, so the cache still does its job the rest of the time.
+
 ---
 
 ## Things worth doing later

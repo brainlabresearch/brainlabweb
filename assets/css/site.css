@@ -131,7 +131,11 @@ a{color:inherit}
 .member:hover .avatar img,.member:focus-visible .avatar img{transform:scale(1.045)}
 
 .people-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:clamp(14px,2vw,26px)}
-.member{text-decoration:none;color:inherit;display:block}
+/* A button, not a link — it opens a dialog. Everything here is undoing the
+   default button chrome so it still reads as a tile. */
+.member{text-decoration:none;color:inherit;display:block;width:100%;
+  background:none;border:0;padding:0;margin:0;font:inherit;text-align:left;cursor:pointer;
+  -webkit-appearance:none;appearance:none}
 .member .name{font-family:var(--display);font-weight:600;font-size:15px;letter-spacing:-.012em;margin-top:11px;line-height:1.25}
 .member .prog{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;color:var(--muted);margin-top:4px;text-transform:uppercase}
 .member:hover .name{color:var(--excite)}
@@ -145,6 +149,31 @@ a{color:inherit}
 .alum .deg{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;color:var(--rule-text,#8B949C);margin-top:3px}
 .alum .th{display:block;font-family:var(--body);font-size:14px;font-style:italic;color:var(--muted);line-height:1.4;margin-top:3px}
 
+
+/* ---------- bio dialog ----------
+   Native <dialog> opened with showModal(): Escape closes it, focus is trapped,
+   and the rest of the page is inert — none of which we have to implement. */
+dialog.bio{border:0;padding:0;max-width:min(560px,calc(100vw - 32px));width:100%;
+  background:var(--paper);color:var(--graphite);box-shadow:0 24px 70px rgba(13,21,34,.28)}
+dialog.bio::backdrop{background:rgba(13,21,34,.55);backdrop-filter:blur(3px)}
+.bio-in{display:grid;grid-template-columns:132px 1fr;gap:clamp(16px,3vw,26px);
+  padding:clamp(20px,3vw,30px);align-items:start}
+.bio-in .avatar{width:132px}
+.bio-in h3{font-family:var(--display);font-weight:700;font-size:clamp(20px,2.4vw,26px);
+  letter-spacing:-.02em;margin:0 0 4px}
+.bio-in .prog{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--muted);margin:0 0 14px}
+.bio-in p{margin:0;font-size:16.5px;line-height:1.55}
+.bio-x{position:absolute;top:8px;right:10px;background:none;border:0;cursor:pointer;
+  font-size:26px;line-height:1;color:var(--muted);padding:6px 10px}
+.bio-x:hover{color:var(--excite)}
+@media(max-width:520px){.bio-in{grid-template-columns:1fr}.bio-in .avatar{width:112px}}
+
+/* Entry animation, skipped under reduced motion by the block further down. */
+dialog.bio[open]{animation:bio-in .22s cubic-bezier(.2,.7,.3,1)}
+dialog.bio[open]::backdrop{animation:bio-fade .22s ease}
+@keyframes bio-in{from{opacity:0;transform:translateY(8px) scale(.98)}}
+@keyframes bio-fade{from{opacity:0}}
 /* ---------- news ---------- */
 .news-item{display:grid;grid-template-columns:132px 1fr auto;gap:clamp(14px,3vw,36px);padding:24px 0;border-top:1px solid var(--rule);text-decoration:none;color:inherit;align-items:baseline}
 .news-item:last-of-type{border-bottom:1px solid var(--rule)}
@@ -280,5 +309,6 @@ footer{border-top:1px solid var(--rule);padding:52px 0 40px;margin-top:clamp(40p
   /* transition:none alone would leave the hover zoom snapping instantly to its
      end state, which is the jolt reduced-motion is meant to avoid. Drop it. */
   .member:hover .avatar img,.member:focus-visible .avatar img{transform:none}
+  dialog.bio[open],dialog.bio[open]::backdrop{animation:none}
   *{animation:none!important;transition:none!important}
 }

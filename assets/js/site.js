@@ -93,3 +93,32 @@
   size(); seed();
   if (reduce) draw(); else requestAnimationFrame(step);
 })();
+
+/* Bio dialogs on the people page.
+   Native <dialog> does the hard parts — Escape to close, focus trapping, making
+   the rest of the page inert — so this only wires up opening, the close button,
+   and clicking the backdrop. Without JS the tiles simply don't open; the bio
+   text still ships in the HTML. */
+(function () {
+  var openers = document.querySelectorAll('[data-bio]');
+  if (!openers.length) return;
+
+  Array.prototype.forEach.call(openers, function (btn) {
+    var dlg = document.getElementById(btn.dataset.bio);
+    if (!dlg || typeof dlg.showModal !== 'function') return;
+
+    btn.addEventListener('click', function () { dlg.showModal(); });
+
+    var x = dlg.querySelector('.bio-x');
+    if (x) x.addEventListener('click', function () { dlg.close(); });
+
+    /* A click landing on the dialog element itself is a click on the backdrop —
+       the content sits in a child, so anything inside never reaches here. */
+    dlg.addEventListener('click', function (e) {
+      if (e.target === dlg) dlg.close();
+    });
+
+    /* Return focus to the tile that opened it. */
+    dlg.addEventListener('close', function () { btn.focus(); });
+  });
+})();

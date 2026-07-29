@@ -288,9 +288,16 @@ your site by reorganising a folder, which is the thing this move was meant to fi
 
 Edit, commit, push. Pages redeploys in under a minute.
 
-**Add a lab member** — copy an `<a class="member">` block in `people.html`,
-change the name, initials, programme, image path, and link. Drop the photo in
-`assets/people/`.
+**Add a lab member** — copy a `<button class="member">` block in `people.html`,
+change the name, initials, programme, and image path. Then copy a
+`<dialog class="bio">` block, give it a unique `id`, and point the button's
+`data-bio` at that id. Drop the photo in `assets/people/`.
+
+Member tiles are **buttons, not links** — clicking opens a bio dialog rather than
+navigating to rit.edu. It uses the native `<dialog>` element, so Escape closes
+it, focus is trapped while open, and the page behind is inert without any of that
+being hand-written. `site.js` only wires up opening, the close button, and
+backdrop clicks.
 
 **Move someone to alumni** — delete their `member` block, add an `alum` row with
 year and thesis title.

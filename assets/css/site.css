@@ -180,9 +180,16 @@ dialog.bio[open]::backdrop{animation:bio-fade .22s ease}
    since HTML forbids nesting anchors and browsers tear the markup apart if you
    try. The ::after below stretches the headline's hit area over the whole card,
    so it still behaves as one large click target. */
-.news-item{position:relative;display:grid;grid-template-columns:132px 1fr auto;gap:clamp(14px,3vw,36px);padding:24px 0;border-top:1px solid var(--rule);color:inherit;align-items:baseline}
+.news-item{position:relative;display:grid;grid-template-columns:104px 148px 1fr auto;gap:clamp(12px,2.2vw,28px);padding:24px 0;border-top:1px solid var(--rule);color:inherit;align-items:start}
 .news-item:last-of-type{border-bottom:1px solid var(--rule)}
-.news-item .date{font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;color:var(--muted);text-transform:uppercase}
+.news-item .date{font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;color:var(--muted);text-transform:uppercase;padding-top:3px}
+/* The cell is emitted even when there is no picture, so headlines all start on
+   the same line. :empty keeps that reservation invisible rather than showing an
+   empty grey box that reads as a broken image. */
+.news-item .thumb{display:block;width:148px;aspect-ratio:3/2;overflow:hidden;background:var(--paper-2)}
+.news-item .thumb:empty{background:none}
+.news-item .thumb img{width:100%;height:100%;object-fit:cover;transition:transform .45s cubic-bezier(.2,.7,.3,1)}
+.news-item:hover .thumb img{transform:scale(1.04)}
 .news-item h4{font-family:var(--display);font-weight:600;font-size:clamp(17px,1.9vw,21px);letter-spacing:-.018em;margin:0;line-height:1.28}
 .news-item h4 a{text-decoration:none;color:inherit}
 .news-item h4 a::after{content:"";position:absolute;inset:0}
@@ -194,7 +201,19 @@ dialog.bio[open]::backdrop{animation:bio-fade .22s ease}
 .news-item .arrow{font-family:var(--mono);color:var(--rule);font-size:18px;transition:color .2s ease,transform .2s ease}
 .news-item:hover h4{color:var(--excite)}
 .news-item:hover .arrow{color:var(--excite);transform:translateX(4px)}
-@media(max-width:700px){.news-item{grid-template-columns:1fr}.news-item .arrow{display:none}}
+/* Four columns get cramped before the single-column breakpoint, so the picture
+   drops out first and the text keeps its measure. */
+@media(max-width:880px){
+  .news-item{grid-template-columns:104px 118px 1fr auto}
+  .news-item .thumb{width:118px}
+}
+@media(max-width:700px){
+  .news-item{grid-template-columns:1fr;gap:10px}
+  .news-item .arrow{display:none}
+  /* Full width reads better than a small square once it is stacked. */
+  .news-item .thumb{width:100%;aspect-ratio:16/9}
+  .news-item .thumb:empty{display:none}
+}
 
 /* ---------- topic cloud ----------
    A short banner above the research detail: a quick read on what the lab has

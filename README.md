@@ -341,6 +341,35 @@ mid-word. Summaries are trimmed back to the last complete sentence, or the last
 whole word plus an ellipsis. Sentence detection ignores abbreviations — matching
 a bare `". "` cut *"published on Jan. 22 in Natu"* down to *"published on Jan."*
 
+### Article images
+
+Each scraped item gets a thumbnail, downloaded into `assets/news/` and committed
+— never hotlinked. Same reasoning as the headshots: an image served from RIT is
+an image RIT can move or delete out from under the site.
+
+Two URLs exist for the same picture, and picking the right one matters. The
+article page carries the full-size original on `cdn.rit.edu` (~180 KB each, about
+1 MB across the list); the news *index* carries Drupal's pre-sized
+`news_thumbnail` variant, roughly 3.5× smaller. The script prefers the thumbnail
+and falls back to the original. Total is around 330 KB.
+
+Those thumbnail URLs carry an `itok` signature that **expires** — fatal if we
+hotlinked them, irrelevant when downloading, since the token only has to be valid
+for that one fetch. But it does mean a later run can fail to re-fetch a picture
+that is already on disk, so `saveImage()` keeps the existing file when a download
+fails. Without that, an item would silently lose its image while the file stayed
+orphaned in the repo.
+
+The two URLs share a filename, and that is what matches a thumbnail to its
+article. Note the article page also contains `news_thumbnail` images for *other*
+stories listed alongside it — matching those would attach the wrong picture,
+which is why the article's own hero is identified by its absolute `cdn.rit.edu`
+URL specifically.
+
+A `MANUAL` entry can set `imageUrl` to have its picture downloaded the same way.
+Items with no image still emit an empty thumbnail cell, so every headline in the
+list starts on the same vertical line.
+
 ### feed.xml
 
 The same script writes `feed.xml`, an RSS feed of the news list, linked from

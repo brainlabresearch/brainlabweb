@@ -25,8 +25,8 @@
  * will not appear. Add those to MANUAL below.
  */
 
-import { readFileSync, writeFileSync } from 'node:fs';
-import { resolve, dirname } from 'node:path';
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
+import { resolve, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -122,6 +122,57 @@ function tidySummary(s) {
   return t.slice(0, t.lastIndexOf(' ')).replace(/[,;:]$/, '') + '…';
 }
 
+/**
+ * Article images.
+ *
+ * Two URLs exist for the same picture and the choice matters:
+ *
+ *   - The article page carries the full-size original on cdn.rit.edu — around
+ *     180 KB each, roughly 1 MB across the list.
+ *   - The news index carries Drupal's pre-sized `news_thumbnail` variant of the
+ *     same file, about 3.5x smaller.
+ *
+ * The thumbnails carry an `itok` signature that expires, which would be fatal if
+ * we hotlinked them — but we download at build time, so the token only has to be
+ * valid for that one fetch. Downloading rather than hotlinking is the same call
+ * made for the headshots: an image served from RIT is an image RIT can move or
+ * delete out from under the site.
+ *
+ * The two URLs share a filename, which is what links a thumbnail to its article.
+ */
+function thumbIndex(indexHtml) {
+  const map = new Map();
+  for (const m of indexHtml.matchAll(/(?:src|data-src)="([^"]*styles\/news_thumbnail\/[^"]*)"/g)) {
+    const url = m[1].startsWith('http') ? m[1] : `https://www.rit.edu${m[1]}`;
+    map.set(basename(url.split('?')[0]).toLowerCase(), url);
+  }
+  return map;
+}
+
+async function saveImage(url, slug, dir) {
+  const dest = resolve(dir, `${slug}.jpg`);
+  const rel = `assets/news/${slug}.jpg`;
+
+  /* Keep whatever is already committed if the download fails. The itok
+     signatures on RIT's thumbnails expire, so a later run can easily fail to
+     re-fetch a picture that is sitting right there on disk — and without this
+     the item would silently lose its image while the file stayed orphaned in
+     the repo. */
+  const keepExisting = () => (existsSync(dest) ? { file: rel, bytes: null, reused: true } : null);
+
+  try {
+    const res = await fetch(url, { headers: { 'User-Agent': CONFIG.ua } });
+    if (!res.ok) return keepExisting();
+    const buf = Buffer.from(await res.arrayBuffer());
+    if (buf.length < 1000) return keepExisting();   // an error page, not a picture
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(dest, buf);
+    return { file: rel, bytes: buf.length };
+  } catch {
+    return keepExisting();
+  }
+}
+
 async function scrapeArticle(url) {
   const html = (await get(url)).replace(/<script[\s\S]*?<\/script>/gi, ' ');
 
@@ -143,7 +194,12 @@ async function scrapeArticle(url) {
     date = `${m[3]}-${mm}-${String(m[2]).padStart(2, '0')}`;
   }
 
-  return { url, title, summary, date };
+  /* The article's own hero is the absolute cdn.rit.edu one. The relative
+     news_thumbnail images on the same page belong to OTHER articles listed
+     alongside it, so matching those would attach the wrong picture. */
+  const hero = (html.match(/https:\/\/cdn\.rit\.edu\/images\/news\/[^"?\s]+\.(?:jpg|jpeg|png|webp)/i) || [])[0] || null;
+
+  return { url, title, summary, date, hero };
 }
 
 const fmt = (iso) => {
@@ -170,8 +226,14 @@ const item = (n) => {
   const body = n.summaryHtml ?? esc(n.summary);
   const linked = n.url && n.linkTitle !== false;
   const head = linked ? `<a href="${esc(n.url)}">${esc(n.title)}</a>` : esc(n.title);
+  /* The cell is emitted even with no picture, so every headline in the list
+     still starts on the same vertical line. */
+  const pic = n.image
+    ? `<span class="thumb"><img src="${esc(n.image)}" alt="" loading="lazy" onerror="this.closest('.thumb').remove()"></span>`
+    : '<span class="thumb"></span>';
   return `  <div class="news-item">
     <span class="date">${esc(fmt(n.date))}</span>
+    ${pic}
     <span><h4>${head}</h4>
     <p>${body}</p></span>
     ${linked ? '<span class="arrow">→</span>' : '<span></span>'}
@@ -185,6 +247,8 @@ const urls = [...new Set(
   [...index.matchAll(/href="(https:\/\/www\.rit\.edu\/brainlab\/news\/[^"]+)"/g)].map((m) => m[1]),
 )];
 console.log(`found ${urls.length} article links on ${CONFIG.index}`);
+const thumbs = thumbIndex(index);
+const IMG_DIR = resolve(ROOT, 'assets/news');
 
 const scraped = [];
 for (const u of urls) {
@@ -193,11 +257,26 @@ for (const u of urls) {
     if (!a.title) { console.warn(`  SKIP (no title) ${u}`); continue; }
     if (!a.date) console.warn(`  no date found for ${u}`);
     a.announce = ANNOUNCE_SCRAPED.has(u);
+    const slug = u.replace(/\/$/, '').split('/').pop();
+    const want = a.hero ? thumbs.get(basename(a.hero).toLowerCase()) ?? a.hero : null;
+    if (want) {
+      const saved = await saveImage(want, slug, IMG_DIR);
+      if (saved) { a.image = saved.file; a.bytes = saved.bytes; }
+    }
     scraped.push(a);
-    console.log(`  ${a.date ?? '????-??-??'}  ${a.title.slice(0, 70)}`);
+    console.log(`  ${a.date ?? '????-??-??'}  ${a.image ? (a.bytes ? String(Math.round(a.bytes/1024)).padStart(4)+'K' : ' kept') : '  --'}  ${a.title.slice(0, 62)}`);
   } catch (e) {
     console.warn(`  FAILED ${u} — ${e.message}`);
   }
+}
+
+/* MANUAL entries may name an imageUrl; download it the same way so nothing on
+   the page is hotlinked from someone else's server. */
+for (const n of MANUAL) {
+  if (!n.imageUrl) continue;
+  const slug = (n.slug ?? n.title).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60);
+  const saved = await saveImage(n.imageUrl, slug, resolve(ROOT, 'assets/news'));
+  if (saved) n.image = saved.file;
 }
 
 const all = [...scraped, ...MANUAL]

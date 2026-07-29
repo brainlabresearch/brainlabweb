@@ -184,6 +184,56 @@ to proxied afterwards if you want the analytics.
 
 ---
 
+## The logo
+
+`assets/icons/brainlablogo.svg` is the source. Everything else in that folder is
+generated:
+
+```bash
+node tools/build-logo.mjs
+```
+
+| File | Used for |
+|---|---|
+| `mark.svg` / `mark-dark.svg` | the circular mark in the nav |
+| `logo.svg` / `logo-dark.svg` | full lockup — the footer uses the light one |
+| `favicon.svg` | browser tab |
+| `apple-touch-icon.png` | iOS home screen (180×180) |
+| `og-card.png` | social preview (1200×630) |
+
+**Why there are light and dark files instead of one recolourable one.** The mark
+is two-tone by design — a pale half and a dark half — so it cannot follow a
+single CSS `color` the way a one-colour glyph would. The nav swaps between them
+as it flips from the dark band to the light stuck state.
+
+**Two traps in the source**, both of which produced a blank or broken logo before
+being handled in `build-logo.mjs`:
+
+- The main circle carries **no `fill` attribute** and relies on inheriting the
+  default black. Search-and-replacing `#000000` misses it, and the dark variant
+  comes out dark-on-dark.
+- The pale half is an **opaque rect that masks the circle beneath it**. Making it
+  transparent doesn't reveal the page background, it reveals the black circle and
+  the mark collapses into a solid disc. It has to be painted the background
+  colour — which is the reason for per-ground files.
+
+It is also a PowerPoint export, so it arrives with a fixed width/height and a
+clipPath pinned to a much larger canvas. The script swaps that for a viewBox —
+expressed **after** the group's `translate(-1397,-1009)`, since using the
+original canvas coordinates frames empty space.
+
+**Outstanding: the wordmark is live text in Aptos**, a Microsoft font that almost
+nobody else has and that this site does not load, so it silently falls back to
+whatever sans-serif the visitor happens to have. The logo therefore renders
+slightly differently from machine to machine. The fix is to re-export the source
+with the text converted to outlines, then re-run the script.
+
+To regenerate the two PNGs after changing the source, see the commands in the
+commit that added them — they are rendered from HTML with headless Chrome, since
+there is no image tooling in this repo.
+
+---
+
 ## Headshots
 
 The site expects local images at `assets/people/<first-last>.jpg`, square-ish.

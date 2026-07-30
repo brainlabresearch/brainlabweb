@@ -58,7 +58,39 @@ a{color:inherit}
 .nav.stuck .brand{color:var(--graphite)}
 .nav.stuck .brand span{color:var(--muted)}
 .nav.stuck .nav-links a{color:var(--graphite)}
-@media(max-width:820px){.nav-links a:not(.nav-cta){display:none}}
+.nav-toggle{display:none}
+
+/* Below this width the links used to be hidden outright, leaving no way to reach
+   any page from a phone — only the Join us button survived. They now collapse
+   into a panel behind the toggle. */
+@media(max-width:820px){
+  .nav-toggle{display:flex;flex-direction:column;justify-content:center;gap:5px;
+    margin-left:auto;width:44px;height:36px;padding:0 9px;background:none;border:0;cursor:pointer}
+  .nav-toggle span{display:block;height:2px;background:#fff;transition:background .35s ease}
+  .nav.stuck .nav-toggle span{background:var(--graphite)}
+
+  /* .nav is fixed, so it is the containing block: top:100% puts the panel
+     directly under the bar. */
+  .nav-links{position:absolute;top:100%;left:0;right:0;margin:0;display:none;
+    flex-direction:column;align-items:stretch;gap:0;
+    background:var(--ink);padding:4px var(--pad) 18px;
+    border-bottom:1px solid rgba(255,255,255,.14);
+    /* The panel drops onto the dark hero, so a hairline alone barely separates
+       them; the shadow makes it read as a layer above the page. */
+    box-shadow:0 18px 34px rgba(13,21,34,.34)}
+  .nav.open .nav-links{display:flex}
+  .nav.stuck .nav-links{background:var(--paper);border-bottom-color:var(--rule)}
+
+  .nav-links a{font-size:16.5px;padding:14px 0;color:#fff}
+  .nav.stuck .nav-links a{color:var(--graphite)}
+  .nav-links a + a{border-top:1px solid rgba(255,255,255,.12)}
+  .nav.stuck .nav-links a + a{border-top-color:var(--rule)}
+  /* The sliding underline is a desktop hover affordance; on a stacked list it
+     just reads as a stray rule under one item. */
+  .nav-links a::after{display:none}
+  .nav-links a[aria-current="page"]{color:var(--excite)}
+  .nav.stuck .nav-links a[aria-current="page"]{color:var(--excite)}
+}
 
 /* ---------- dark bands ---------- */
 .hero,.pagehead{position:relative;background:var(--ink);color:#fff;overflow:hidden}

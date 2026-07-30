@@ -140,3 +140,37 @@
     dlg.addEventListener('close', function () { btn.focus(); });
   });
 })();
+
+/* Mobile nav. Below 820px the links live in a panel behind the toggle; above it
+   the toggle is hidden and this does nothing. */
+(function () {
+  var nav = document.getElementById('nav');
+  var btn = nav && nav.querySelector('.nav-toggle');
+  if (!btn) return;
+
+  function set(open) {
+    nav.classList.toggle('open', open);
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+
+  btn.addEventListener('click', function () {
+    set(!nav.classList.contains('open'));
+  });
+
+  /* Same-page anchors like #join do not reload, so the panel would otherwise
+     stay open over the content the visitor just asked to see. */
+  Array.prototype.forEach.call(nav.querySelectorAll('.nav-links a'), function (a) {
+    a.addEventListener('click', function () { set(false); });
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') set(false);
+  });
+
+  /* Rotating a phone or widening the window can cross the breakpoint while the
+     panel is open; without this it stays flagged open and reappears on the way
+     back down. */
+  addEventListener('resize', function () {
+    if (innerWidth > 820) set(false);
+  });
+})();

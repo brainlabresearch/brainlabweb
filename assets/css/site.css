@@ -117,7 +117,12 @@ a{color:inherit}
 
 
 /* ---------- sections ---------- */
-.sec{padding:clamp(64px,8.5vw,108px) 0}
+/* Vertical only. The padding SHORTHAND here would reset padding-left/right to
+   zero, and because this rule comes after .wrap it wins — so every
+   <section class="sec wrap"> lost its horizontal gutter and ran to the edge of
+   the screen on any viewport narrower than --max. Invisible on a wide desktop,
+   where margin:0 auto still leaves whitespace, and obvious on a phone. */
+.sec{padding-top:clamp(64px,8.5vw,108px);padding-bottom:clamp(64px,8.5vw,108px)}
 .sec-head{margin-bottom:22px}
 .sec-head h2{font-family:var(--display);font-weight:700;font-size:clamp(25px,3.4vw,40px);letter-spacing:-.028em;margin:6px 0 0;line-height:1.1;max-width:22ch}
 .divider{width:100%;max-width:150px;height:26px;display:block;color:var(--rule);margin-top:10px}
@@ -265,7 +270,8 @@ dialog.bio[open]::backdrop{animation:bio-fade .22s ease}
 
    There is no play control. The timeline lives inside the panel as a hairline
    along the bottom edge, and hovering or focusing the cloud pauses it. */
-.cloud-sec{padding:clamp(26px,3.4vw,44px) 0 0}
+/* Same trap as .sec — set the vertical sides only. */
+.cloud-sec{padding-top:clamp(26px,3.4vw,44px);padding-bottom:0}
 .cloud-wrap{position:relative}
 
 .cloud{position:relative;overflow:hidden;background:var(--paper-2);

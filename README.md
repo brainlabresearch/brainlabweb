@@ -267,6 +267,53 @@ heading hidden behind the fixed nav.
 
 ---
 
+## Thesis links
+
+Alumni thesis titles link to the record in RIT's institutional repository.
+
+```bash
+node tools/match-theses.mjs           # report, change nothing
+node tools/match-theses.mjs --write   # apply the links
+```
+
+**Run it only when a thesis alum is added — never on a schedule.** It harvests
+~11,000 records, and a repository URL never changes once assigned, so there is
+nothing to keep in sync. The harvest is cached in `tools/.theses-cache.json`
+(gitignored, 1.4 MB); delete it to force a refresh.
+
+**Only theses are linked, not projects.** RIT deposits theses; project reports
+generally are not, so searching for those yields misses at best and false matches
+at worst. The script keys off the `· Thesis` / `· Project` label already in each
+row.
+
+**It must use the `qdc` metadata format.** This is the trap, and it produced
+links that were *wrong rather than broken* the first time:
+
+- bepress keeps two unrelated numbering schemes. The OAI header identifier is an
+  internal article number; the public page uses a different sequence. Article
+  1005 lives at `/theses/21`, and `/theses/12482` is article 13617 — no offset
+  between them.
+- Deriving the URL from the header gave `/theses/12707` for Shery Mathews, which
+  is a real, live page — for somebody else's thesis on B2B cybersecurity sales.
+  Only spot-checking the live URLs caught it.
+- `oai_dc` exposes just the PDF under `/context/`, which 403s outside a browser.
+  `qdc` puts the real landing page in `dc:identifier`.
+
+**Its search cannot be used.** `/do/search/` is a JavaScript Solr client; fetching
+it returns a shell reading "No results" whatever the query, and the JSON endpoints
+its own scripts call 404 from outside. OAI-PMH is the supported machine interface.
+
+A title match alone is not accepted — the alum's surname must also appear in the
+record's `dc:creator`, so a generic title cannot silently attach to the wrong
+person's work.
+
+**The repository is authoritative for thesis titles.** Two entries here were
+corrected to match their deposited records, along with the spelling of Shery
+Mathews' name. If a title stops matching, check the repository before assuming
+the script is broken.
+
+---
+
 ## Headshots
 
 The site expects local images at `assets/people/<first-last>.jpg`, square-ish.

@@ -190,6 +190,10 @@ a{color:inherit}
 /* Order within .who is: name, then .deg, then .th. */
 .alum .deg{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;color:var(--rule-text,#8B949C);margin-top:3px}
 .alum .th{display:block;font-family:var(--body);font-size:14px;font-style:italic;color:var(--muted);line-height:1.4;margin-top:3px}
+/* Thesis titles link to the record in RIT's repository. Understated by default
+   — a list of 21 alumni with 13 loud links would read as a link farm. */
+.alum .th a{color:inherit;text-decoration:none;border-bottom:1px solid var(--rule)}
+.alum .th a:hover{color:var(--excite);border-bottom-color:var(--excite)}
 
 
 /* ---------- bio dialog ----------

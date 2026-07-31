@@ -3,3 +3,6 @@
 Thumbs.db
 desktop.ini
 *~
+
+# Harvest cache for tools/match-theses.mjs — 1.4 MB, regenerable, not needed in the repo.
+tools/.theses-cache.json

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * Rebuilds news.html (and the three-item summary on index.html) from RIT's
- * Brain Lab news index.
+ * Rebuilds news.html (and the three-item summary on index.html) from RIT's news
+ * search, limited to the last few years — see CONFIG.maxAgeYears.
  *
  *   node tools/fetch-news.mjs
  *
@@ -28,9 +28,14 @@
  *     plain text is missing from it. Those go in PINNED.
  *
  * Anything published off rit.edu still goes in MANUAL.
+ *
+ * Everything the search reaches back to is then cut to a rolling age window, so
+ * the finds below that horizon — the 2012–2018 stories — are deliberately not on
+ * the page. Widen CONFIG.maxAgeYears to bring them back; they cost nothing to
+ * rediscover, since the pruning below only removes the pictures.
  */
 
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync, unlinkSync } from 'node:fs';
 import { resolve, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -42,8 +47,22 @@ const CONFIG = {
   /* Generous: the pager runs out after two pages today. The loop stops as soon
      as a page yields no new links, so this only bounds a runaway. */
   maxPages: 8,
+  /* A rolling window, not a fixed date: anything older drops off on the run
+     after its fifth anniversary. The search reaches back to 2012, and a news
+     page led by a decade-old story reads as abandoned rather than deep. */
+  maxAgeYears: 5,
   ua: 'brainlabresearch.org news updater',
 };
+
+const SINCE = (() => {
+  const d = new Date();
+  d.setUTCFullYear(d.getUTCFullYear() - CONFIG.maxAgeYears);
+  return d.toISOString().slice(0, 10);
+})();
+
+/* Applied to the manual entries too, so the window means the same thing
+   everywhere on the page. ISO dates compare correctly as strings. */
+const recent = (n) => Boolean(n.date) && n.date >= SINCE;
 
 /**
  * Which candidates are really his. Search hits are mixed in with unrelated promo
@@ -303,13 +322,18 @@ const IMG_DIR = resolve(ROOT, 'assets/news');
 
 const scraped = [];
 let unrelated = 0;
+let verified = 0;
+let stale = 0;
 for (const u of candidates) {
   try {
     const a = await scrapeArticle(u);
     /* Promo cards and section links share the listing page with real hits. */
     if (!a.named) { unrelated += 1; continue; }
     if (!a.title) { console.warn(`  SKIP (no title) ${u}`); continue; }
-    if (!a.date) console.warn(`  no date found for ${u}`);
+    verified += 1;
+    if (!a.date) { console.warn(`  SKIP (no date) ${u}`); continue; }
+    /* Ahead of the image download, so aged-out articles cost no bandwidth. */
+    if (!recent(a)) { stale += 1; continue; }
     a.announce = ANNOUNCE_SCRAPED.has(u);
     const slug = u.replace(/\/$/, '').split('/').pop();
     const want = a.hero ? thumbs.get(basename(a.hero).toLowerCase()) ?? a.hero : null;
@@ -324,11 +348,17 @@ for (const u of candidates) {
   }
 }
 if (unrelated) console.log(`  ignored ${unrelated} candidate(s) that do not name him`);
+if (stale) console.log(`  ignored ${stale} article(s) published before ${SINCE}`);
 
 /* Without this, a search that quietly stops returning results would rewrite the
-   page down to just the MANUAL entries and delete a decade of history in a
-   commit that looks routine. RIT has already moved this source once. */
-if (!scraped.length) {
+   page down to just the MANUAL entries and delete years of history in a commit
+   that looks routine. RIT has already moved this source once.
+ *
+ * Deliberately counted before the age filter. Checking the published list
+ * instead would conflate a broken source with the legitimate case where every
+ * hit is simply too old — and would turn a quiet news year into a build
+ * failure. */
+if (!verified) {
   console.error(`\nERROR  no RIT articles survived verification (${candidates.size} candidates checked).`);
   console.error(`       ${CONFIG.search} has probably moved or changed shape again.`);
   console.error('       Refusing to rewrite news.html with only the manual entries.');
@@ -345,8 +375,21 @@ for (const n of MANUAL) {
 }
 
 const all = [...scraped, ...MANUAL]
-  .filter((n) => n.date)
+  .filter(recent)
   .sort((a, b) => b.date.localeCompare(a.date));
+
+/* Every article that ages out strands its picture, and the manual entries have
+   pictures too — so the keep-set is built from what actually got published
+   rather than from the scraped list. Only ever touches .jpg files in this one
+   directory, and only on a run that got past the verification guard above. */
+const keep = new Set(all.filter((n) => n.image).map((n) => basename(n.image)));
+let pruned = 0;
+for (const f of readdirSync(IMG_DIR)) {
+  if (!/\.jpg$/i.test(f) || keep.has(f)) continue;
+  unlinkSync(resolve(IMG_DIR, f));
+  pruned += 1;
+}
+if (pruned) console.log(`pruned  ${pruned} image(s) whose article is no longer listed`);
 
 /* news.html — replace only the list, leaving the rest of the page alone. */
 const NEWS = resolve(ROOT, 'news.html');

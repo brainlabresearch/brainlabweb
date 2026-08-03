@@ -331,6 +331,53 @@ your site by reorganising a folder, which is the thing this move was meant to fi
 
 ---
 
+## Course notes
+
+`learn.html` is a hub listing courses; each course has its own page, currently
+just `learn-machine-intelligence.html`. Slides live in
+`assets/learn/<course-slug>/` and are served straight from the repo — no login,
+no myCourses.
+
+The lecture lists are generated:
+
+```bash
+node tools/build-learn.mjs
+```
+
+It reads every PDF, counts the slides, measures the file, and rewrites the block
+between `<!-- LECTURES:START -->` and `<!-- LECTURES:END -->`, plus the totals
+between the `COUNT` markers on both pages. Slide counts and file sizes are the
+sort of number that rots quietly when typed by hand, so they are never typed.
+
+**Order and titles come from the `COURSES` table in the script, not from
+filenames.** `introduction.pdf` sorts after `classification.pdf`, and no naming
+scheme survives a course that reorders a topic mid-semester. The running order
+for Machine Intelligence follows the topic list in the course syllabus.
+
+**Adding a lecture** — copy the PDF into the course folder, add a row to
+`lectures` in the right position, re-run. A PDF in the folder that no row
+mentions is reported and left unpublished, so a deck dropped in and forgotten
+does not sit there invisibly.
+
+**Adding a course** — copy `learn-machine-intelligence.html`, keep the four
+marker comments, add an entry to `COURSES` and a card to `learn.html`. Then
+`sitemap.xml`, and `node tools/stamp-assets.mjs`.
+
+Filenames are the source filenames with underscores turned into hyphens, which
+keeps re-syncing from the course folder a mechanical step rather than a lookup.
+
+**Two things deliberately not published.** `lagrange_multipliers_bishop.pdf` is
+Appendix E of Bishop's *Pattern Recognition and Machine Learning* — someone
+else's copyright, so it stays out. And `combining_models` exists only as a
+`.pptx`, with no PDF alongside it; export one and it can be added.
+
+`*.pdf` and `*.pptx` are marked `binary` in `.gitattributes`. This is not
+optional: the blanket `text=auto` above them otherwise guesses, and a PDF guessed
+wrong has its line endings rewritten on checkout, which corrupts it silently —
+it downloads and then refuses to open.
+
+---
+
 ## Routine edits
 
 Edit, commit, push. Pages redeploys in under a minute.

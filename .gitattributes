@@ -8,3 +8,9 @@
 *.jpg binary
 *.jpeg binary
 *.ico binary
+
+# Lecture slides. Not optional: `text=auto` above guesses, and a PDF guessed
+# wrong gets its CRLFs rewritten on checkout, which corrupts the file silently —
+# it downloads and then fails to open.
+*.pdf binary
+*.pptx binary

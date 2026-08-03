@@ -333,10 +333,10 @@ your site by reorganising a folder, which is the thing this move was meant to fi
 
 ## Course notes
 
-`learn.html` is a hub listing courses; each course has its own page, currently
-just `learn-machine-intelligence.html`. Slides live in
-`assets/learn/<course-slug>/` and are served straight from the repo — no login,
-no myCourses.
+`learn.html` is a hub listing courses; each course has its own page —
+`learn-machine-intelligence.html` (CMPE 677) and `learn-digital-ic-design.html`
+(CMPE 530/630). Slides live in `assets/learn/<course-slug>/` and are served
+straight from the repo — no login, no myCourses.
 
 The lecture lists are generated:
 
@@ -345,31 +345,48 @@ node tools/build-learn.mjs
 ```
 
 It reads every PDF, counts the slides, measures the file, and rewrites the block
-between `<!-- LECTURES:START -->` and `<!-- LECTURES:END -->`, plus the totals
-between the `COUNT` markers on both pages. Slide counts and file sizes are the
-sort of number that rots quietly when typed by hand, so they are never typed.
+between `<!-- LECTURES:START -->` and `<!-- LECTURES:END -->`, plus the summary
+between the `COUNT` markers. Slide counts and file sizes are the sort of number
+that rots quietly when typed by hand, so they are never typed.
+
+On the hub, **each card owns a marker named for its course** —
+`COUNT-MACHINE-INTELLIGENCE`, `COUNT-DIGITAL-IC-DESIGN`. One shared `COUNT`
+marker worked while there was a single course and could not have survived a
+second: whichever card held it would have been handed every course's numbers.
 
 **Order and titles come from the `COURSES` table in the script, not from
 filenames.** `introduction.pdf` sorts after `classification.pdf`, and no naming
-scheme survives a course that reorders a topic mid-semester. The running order
-for Machine Intelligence follows the topic list in the course syllabus.
+scheme survives a course that reorders a topic mid-semester. Both running orders
+follow the topic list in the respective syllabus.
+
+**`updated` is stated, not derived.** It is the year the decks were last
+revised, and it is typed into the `COURSES` entry on purpose — file timestamps
+are useless for it, since copying a folder rewrites every mtime and a one-slide
+typo fix would otherwise re-date a whole course.
 
 **Adding a lecture** — copy the PDF into the course folder, add a row to
 `lectures` in the right position, re-run. A PDF in the folder that no row
 mentions is reported and left unpublished, so a deck dropped in and forgotten
 does not sit there invisibly.
 
-**Adding a course** — copy `learn-machine-intelligence.html`, keep the four
-marker comments, add an entry to `COURSES` and a card to `learn.html`. Then
-`sitemap.xml`, and `node tools/stamp-assets.mjs`.
+**Adding a course** — copy an existing course page, keep its `LECTURES` and
+`COUNT` markers, add an entry to `COURSES` and a card to `learn.html` with a
+`COUNT-<SLUG>` marker pair. Then `sitemap.xml`, and `node tools/stamp-assets.mjs`.
 
 Filenames are the source filenames with underscores turned into hyphens, which
 keeps re-syncing from the course folder a mechanical step rather than a lookup.
 
-**Two things deliberately not published.** `lagrange_multipliers_bishop.pdf` is
-Appendix E of Bishop's *Pattern Recognition and Machine Learning* — someone
-else's copyright, so it stays out. And `combining_models` exists only as a
-`.pptx`, with no PDF alongside it; export one and it can be added.
+**Only the lecture folders are copied in.** The course directories also hold
+exams, homework with solutions, lab rubrics, and in one case a grade-change form
+naming a student. None of that belongs on a public site, and solutions least of
+all if the course runs again.
+
+**Decks deliberately absent.** `lagrange_multipliers_bishop.pdf` is Appendix E of
+Bishop's *Pattern Recognition and Machine Learning* — someone else's copyright.
+`combining_models` (CMPE 677) exists only as a `.pptx` with no PDF, leaving a gap
+at the Boosting slot. `power_new.pptx` (CMPE 630) looks like a revision of
+`power.pptx` but has no PDF either, so the older `power.pdf` is what ships.
+Export PDFs and both can be added.
 
 `*.pdf` and `*.pptx` are marked `binary` in `.gitattributes`. This is not
 optional: the blanket `text=auto` above them otherwise guesses, and a PDF guessed

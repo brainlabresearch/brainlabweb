@@ -36,8 +36,13 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
  */
 const COURSES = [
   {
+    slug: 'machine-intelligence',
     page: 'learn-machine-intelligence.html',
     dir: 'assets/learn/machine-intelligence',
+    /* The year the decks were last revised, stated rather than derived. File
+       timestamps are not it: copying a folder rewrites every mtime, and a typo
+       fix in one slide would otherwise re-date the whole course. */
+    updated: 2026,
     lectures: [
       { file: 'introduction.pdf', title: 'Introduction to machine learning' },
       { file: 'linear-regression.pdf', title: 'Linear regression' },
@@ -51,6 +56,31 @@ const COURSES = [
       { file: 'intro-ann.pdf', title: 'Neural networks and backpropagation' },
       { file: 'ann-architectures.pdf', title: 'Deep learning architectures' },
       { file: 'reinforcement-learning.pdf', title: 'Reinforcement learning' },
+    ],
+  },
+  /**
+   * Order follows the topic sequence in the CMPE-530/630 syllabus: transistor
+   * theory, then fabrication and layout, then delay and power, then the logic
+   * families built on top, and testing and memory last.
+   */
+  {
+    slug: 'digital-ic-design',
+    page: 'learn-digital-ic-design.html',
+    dir: 'assets/learn/digital-ic-design',
+    updated: 2022,
+    lectures: [
+      { file: 'introduction-to-digital-ic-design.pdf', title: 'Introduction to digital IC design' },
+      { file: 'semiconductor-basics.pdf', title: 'Semiconductor basics' },
+      { file: 'mosfet-switch-model-and-circuits.pdf', title: 'The MOSFET switch model and CMOS circuits' },
+      { file: 'mosfet-modeling.pdf', title: 'MOSFET modeling' },
+      { file: 'ic-fabrication-and-layout.pdf', title: 'IC fabrication and layout' },
+      { file: 'delay-models.pdf', title: 'Delay models' },
+      { file: 'delay-models-continued.pdf', title: 'Delay models, continued' },
+      { file: 'power.pdf', title: 'Power' },
+      { file: 'combinational-circuit-design.pdf', title: 'Combinational circuit design' },
+      { file: 'sequential-circuit-design.pdf', title: 'Sequential circuit design' },
+      { file: 'testing-verification.pdf', title: 'Testing and verification' },
+      { file: 'memory.pdf', title: 'Memory' },
     ],
   },
 ];
@@ -82,8 +112,7 @@ function splice(html, name, block) {
   return html.replace(re, `$1\n${block}\n  $2`);
 }
 
-let totalLectures = 0;
-let totalSlides = 0;
+const hubCards = [];
 
 for (const course of COURSES) {
   const dir = resolve(ROOT, course.dir);
@@ -129,19 +158,24 @@ for (const course of COURSES) {
   let html = readFileSync(page, 'utf8');
   html = splice(html, 'LECTURES', rows.join('\n\n'));
   html = splice(html, 'COUNT',
-    `  <span class="pub-count">${course.lectures.length} lectures · ${courseSlides} slides · ${size(courseBytes)}</span>`);
+    `  <span class="pub-count">${course.lectures.length} lectures · ${courseSlides} slides · ${size(courseBytes)} · updated ${course.updated}</span>`);
   writeFileSync(page, html);
 
   console.log(`wrote  ${course.lectures.length} lectures to ${course.page}`);
-  totalLectures += course.lectures.length;
-  totalSlides += courseSlides;
+  hubCards.push({
+    slug: course.slug,
+    text: `${course.lectures.length} lectures · ${courseSlides} slides · updated ${course.updated}`,
+  });
 }
 
-/* The hub advertises the totals, so it has to be rewritten whenever a course
-   changes rather than carrying a number someone remembered to update. */
+/* Each card on the hub owns a marker named for its course. A single shared
+   marker worked while there was one course and silently could not survive a
+   second — whichever card held it would have been given every course's numbers. */
 const hub = resolve(ROOT, 'learn.html');
 let hubHtml = readFileSync(hub, 'utf8');
-hubHtml = splice(hubHtml, 'COUNT',
-  `  <span class="pub-count">${totalLectures} lectures · ${totalSlides} slides</span>`);
+for (const card of hubCards) {
+  hubHtml = splice(hubHtml, `COUNT-${card.slug.toUpperCase()}`,
+    `  <span class="pub-count">${card.text}</span>`);
+}
 writeFileSync(hub, hubHtml);
-console.log(`wrote  totals to learn.html (${totalLectures} lectures, ${totalSlides} slides)`);
+console.log(`wrote  ${hubCards.length} card(s) to learn.html`);

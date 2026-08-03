@@ -379,11 +379,38 @@ ${body}
 const raw = await fetchAll();
 console.log(`fetched ${raw.length} records from OpenAlex`);
 const works = await enrich(tidy(raw));
-mkdirSync(dirname(CONFIG.out), { recursive: true });
-writeFileSync(CONFIG.out, renderPage(works), 'utf8');
 
 const dropped = raw.length - works.length;
 const named = works.filter((w) => w.cite?.venue).length;
+const coverage = works.length ? named / works.length : 0;
+
+/**
+ * Refuse to publish a page that has lost its citation lines.
+ *
+ * Crossref rate-limits cloud IPs far harder than a laptop. A scheduled run on a
+ * GitHub runner got through the entire enrichment pass in four seconds, which is
+ * only possible if essentially every lookup was turned away. Since failures fall
+ * back to OpenAlex silently and the script still exited 0, that run was one
+ * green news step away from committing a page with half its venues missing,
+ * under a commit message that reads like a routine refresh.
+ *
+ * The floor is checked against the outcome rather than against crossrefFailures:
+ * what matters is whether the page is good, not how it got that way. OpenAlex
+ * alone covers about half of these papers and a healthy run covers all but one,
+ * so neither case lands anywhere near 90%.
+ */
+const FLOOR = 0.9;
+if (coverage < FLOOR && !process.env.ALLOW_DEGRADED) {
+  console.error(`\nERROR   only ${named}/${works.length} entries (${Math.round(coverage * 100)}%) have a venue; expected at least ${FLOOR * 100}%.`);
+  console.error(`        ${crossrefFailures} Crossref lookups failed, which usually means rate limiting.`);
+  console.error('        Refusing to overwrite publications.html with degraded citations.');
+  console.error('        Re-run to pick them up, or set ALLOW_DEGRADED=1 to publish as-is.');
+  process.exit(1);
+}
+
+mkdirSync(dirname(CONFIG.out), { recursive: true });
+writeFileSync(CONFIG.out, renderPage(works), 'utf8');
+
 console.log(`wrote   ${works.length} publications to ${CONFIG.out}`);
 if (dropped > 0) console.log(`dropped ${dropped} (duplicates, preprints of published work, and non-article types)`);
 console.log(`venues  ${named}/${works.length} have a named journal or conference`);

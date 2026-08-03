@@ -5,24 +5,29 @@
  *
  *   node tools/fetch-news.mjs
  *
- * WHY THIS SOURCE. The ask was "anything on RIT news mentioning my name", and
- * there is no clean way to get that:
+ * WHY THIS SOURCE. The ask was "anything on RIT news mentioning my name".
  *
- *   - rit.edu publishes no RSS. /news/rss.xml, /news/rss and /news/feed all
- *     return the ordinary HTML page, not a feed.
- *   - There is no author archive. /news/cory-merkel returns RIT's generic
- *     "Latest News (frontpage)" — their catch-all for unknown paths.
- *   - Their site search is JavaScript-driven, so it can't be fetched.
- *   - Google News RSS does find articles, but a "Cory Merkel" query also returns
- *     two obituaries for a different Merkel and an ice-hockey report, and
- *     restricting to site:rit.edu returns mostly directory pages rather than
- *     articles. Worse, its links are opaque news.google.com redirects rather
- *     than real article URLs.
+ * This used to read https://www.rit.edu/brainlab/news, a curated per-lab index.
+ * RIT retired that subsite — every path under /brainlab now 404s, including the
+ * article URLs themselves — so that approach died outright. The articles all
+ * survive under /news/<slug>, which is where this now points.
  *
- * The Brain Lab news index is curated, stable, and carries real absolute URLs,
- * so that is what this reads. It is a subset of "every RIT mention" — anything
- * published elsewhere on rit.edu that never got added to the lab's own news page
- * will not appear. Add those to MANUAL below.
+ * The replacement source is RIT's news search, which despite an earlier note in
+ * this file is NOT JavaScript-only: /news/news-stories?keys=… is a server-side
+ * Drupal view that renders complete results, pager and all. Searching the
+ * surname turns up every story naming him, which is strictly better than the old
+ * lab index — that page listed 7 articles, this finds 12, some dating to 2014.
+ *
+ * Two wrinkles, both handled below:
+ *
+ *   - The results markup shares a page with promo/sidebar cards, so a raw href
+ *     sweep picks up unrelated stories. Rather than guess at the container
+ *     markup — which RIT can restyle at any time — every candidate is fetched
+ *     and kept only if the article actually names him. See VERIFY.
+ *   - The search index is not exhaustive: at least one story that names him in
+ *     plain text is missing from it. Those go in PINNED.
+ *
+ * Anything published off rit.edu still goes in MANUAL.
  */
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
@@ -32,9 +37,32 @@ import { fileURLToPath } from 'node:url';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
 const CONFIG = {
-  index: 'https://www.rit.edu/brainlab/news',
+  search: 'https://www.rit.edu/news/news-stories',
+  keys: 'Merkel',
+  /* Generous: the pager runs out after two pages today. The loop stops as soon
+     as a page yields no new links, so this only bounds a runaway. */
+  maxPages: 8,
   ua: 'brainlabresearch.org news updater',
 };
+
+/**
+ * Which candidates are really his. Search hits are mixed in with unrelated promo
+ * cards on the same page, so each one is fetched and tested against this.
+ *
+ * The full name, not the bare surname: RIT news carries at least one other
+ * Merkel, and every genuine article introduces him by first and last name before
+ * dropping to the surname, so nothing is lost by being strict.
+ */
+const VERIFY = /\bCory\s+Merkel\b/i;
+
+/**
+ * Stories that name him but that the search index does not return. Kept as bare
+ * slugs under /news/. Re-check occasionally — if RIT reindexes, these become
+ * redundant rather than wrong, since everything is de-duplicated by URL.
+ */
+const PINNED = [
+  'team-presents-eye-tracking-research',
+];
 
 /**
  * Items from outside rit.edu, which no scraper will find. Keep newest-first;
@@ -71,7 +99,7 @@ const MANUAL = [
  * To broadcast one anyway, paste its URL here.
  */
 const ANNOUNCE_SCRAPED = new Set([
-  // 'https://www.rit.edu/brainlab/news/some-article-slug',
+  // 'https://www.rit.edu/news/some-article-slug',
 ]);
 
 const MONTHS = ['january', 'february', 'march', 'april', 'may', 'june',
@@ -129,8 +157,9 @@ function tidySummary(s) {
  *
  *   - The article page carries the full-size original on cdn.rit.edu — around
  *     180 KB each, roughly 1 MB across the list.
- *   - The news index carries Drupal's pre-sized `news_thumbnail` variant of the
- *     same file, about 3.5x smaller.
+ *   - The listing carries Drupal's pre-sized `news_thumbnail` variant of the
+ *     same file, about 3.5x smaller. The search results pages serve the same
+ *     variant the retired lab index did, so this survived the move intact.
  *
  * The thumbnails carry an `itok` signature that expires, which would be fatal if
  * we hotlinked them — but we download at build time, so the token only has to be
@@ -181,9 +210,13 @@ async function scrapeArticle(url) {
     return m ? clean(m[1]) : '';
   };
 
-  /* RIT suffixes every og:title with the subsite name. */
-  const title = meta('og:title').replace(/\s*\|\s*Brain Lab\s*$/i, '').trim();
+  /* RIT suffixes every og:title with the subsite name — "| Brain Lab" on the
+     retired lab pages, "| RIT" on the university ones these moved to. */
+  const title = meta('og:title').replace(/\s*\|\s*(?:Brain Lab|RIT)\s*$/i, '').trim();
   const summary = tidySummary(meta('og:description') || meta('description'));
+
+  /* Whether this is actually about him — the search returns promo cards too. */
+  const named = VERIFY.test(html);
 
   /* No article:published_time and no ld+json on these pages, so the printed
      date is all there is. The first one on the page is the article's. */
@@ -199,7 +232,7 @@ async function scrapeArticle(url) {
      alongside it, so matching those would attach the wrong picture. */
   const hero = (html.match(/https:\/\/cdn\.rit\.edu\/images\/news\/[^"?\s]+\.(?:jpg|jpeg|png|webp)/i) || [])[0] || null;
 
-  return { url, title, summary, date, hero };
+  return { url, title, summary, date, hero, named };
 }
 
 const fmt = (iso) => {
@@ -242,18 +275,39 @@ const item = (n) => {
 
 /* ---------- run ---------- */
 
-const index = await get(CONFIG.index);
-const urls = [...new Set(
-  [...index.matchAll(/href="(https:\/\/www\.rit\.edu\/brainlab\/news\/[^"]+)"/g)].map((m) => m[1]),
-)];
-console.log(`found ${urls.length} article links on ${CONFIG.index}`);
-const thumbs = thumbIndex(index);
+/* Page through the search until a page turns up nothing new, harvesting the
+   thumbnails on the way past — those only exist on the listing pages. */
+const candidates = new Set(PINNED.map((s) => `https://www.rit.edu/news/${s}`));
+const thumbs = new Map();
+let pages = 0;
+
+for (let page = 0; page < CONFIG.maxPages; page++) {
+  const html = await get(`${CONFIG.search}?keys=${encodeURIComponent(CONFIG.keys)}&page=${page}`);
+  pages += 1;
+
+  for (const [name, url] of thumbIndex(html)) if (!thumbs.has(name)) thumbs.set(name, url);
+
+  /* Articles are linked by relative path here. Excluding the query-string forms
+     of the listing URL is free — the pattern already stops at "?". */
+  const found = [...html.matchAll(/href="(?:https:\/\/www\.rit\.edu)?(\/news\/[^"#?]+)"/g)]
+    .map((m) => `https://www.rit.edu${m[1].replace(/\/$/, '')}`)
+    .filter((u) => u !== `${CONFIG.search}`);
+
+  const before = candidates.size;
+  found.forEach((u) => candidates.add(u));
+  if (candidates.size === before) break;
+}
+
+console.log(`searched ${pages} result page(s) for "${CONFIG.keys}" — ${candidates.size} candidates, ${thumbs.size} thumbnails`);
 const IMG_DIR = resolve(ROOT, 'assets/news');
 
 const scraped = [];
-for (const u of urls) {
+let unrelated = 0;
+for (const u of candidates) {
   try {
     const a = await scrapeArticle(u);
+    /* Promo cards and section links share the listing page with real hits. */
+    if (!a.named) { unrelated += 1; continue; }
     if (!a.title) { console.warn(`  SKIP (no title) ${u}`); continue; }
     if (!a.date) console.warn(`  no date found for ${u}`);
     a.announce = ANNOUNCE_SCRAPED.has(u);
@@ -268,6 +322,17 @@ for (const u of urls) {
   } catch (e) {
     console.warn(`  FAILED ${u} — ${e.message}`);
   }
+}
+if (unrelated) console.log(`  ignored ${unrelated} candidate(s) that do not name him`);
+
+/* Without this, a search that quietly stops returning results would rewrite the
+   page down to just the MANUAL entries and delete a decade of history in a
+   commit that looks routine. RIT has already moved this source once. */
+if (!scraped.length) {
+  console.error(`\nERROR  no RIT articles survived verification (${candidates.size} candidates checked).`);
+  console.error(`       ${CONFIG.search} has probably moved or changed shape again.`);
+  console.error('       Refusing to rewrite news.html with only the manual entries.');
+  process.exit(1);
 }
 
 /* MANUAL entries may name an imageUrl; download it the same way so nothing on

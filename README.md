@@ -407,33 +407,46 @@ year and thesis title.
 node tools/fetch-news.mjs
 ```
 
-It reads RIT's Brain Lab news index, scrapes each article for title, date, and
-summary, rewrites the list in `news.html`, and mirrors the newest three onto
-`index.html`. Both regions are delimited by `<!-- NEWS:START -->` /
-`<!-- NEWS:END -->` markers; everything outside them is left alone. The monthly
-workflow runs it too.
+It searches RIT news, scrapes each article for title, date, and summary, rewrites
+the list in `news.html`, and mirrors the newest three onto `index.html`. Both
+regions are delimited by `<!-- NEWS:START -->` / `<!-- NEWS:END -->` markers;
+everything outside them is left alone. The monthly workflow runs it too.
 
 For a story **not on rit.edu** — press coverage elsewhere — add it to the
 `MANUAL` array in that script. Those are merged with the scraped items and the
 whole list re-sorted by date.
 
-**Why that source and not a search of all RIT news.** There is no clean feed for
-"every RIT article mentioning Cory Merkel":
+**Why a search and not the lab's own news page.** It used to be that page:
+`rit.edu/brainlab/news`, curated and stable. RIT retired the whole `/brainlab`
+subsite in 2026 — every path under it 404s, the article URLs included — so that
+source did not degrade, it vanished. The articles themselves all survive under
+`/news/<slug>`.
 
-- rit.edu publishes no RSS — `/news/rss.xml`, `/news/rss` and `/news/feed` all
-  return the ordinary HTML page.
-- There's no author archive; `/news/cory-merkel` returns RIT's generic
-  "Latest News (frontpage)" catch-all.
-- Their site search is JavaScript-driven, so it can't be fetched.
-- Google News RSS does find articles, but a `"Cory Merkel"` query also returns
-  two obituaries for a different Merkel and an ice-hockey report, and restricting
-  to `site:rit.edu` returns mostly directory pages. Its links are opaque
-  `news.google.com` redirects rather than real article URLs.
+The replacement is RIT's own news search, `/news/news-stories?keys=`. An earlier
+version of this file claimed their search was JavaScript-driven and unfetchable;
+that is wrong. It is a server-side Drupal view that renders complete results and
+a pager, and searching the surname finds strictly more than the lab page ever
+listed — 12 articles against 7, reaching back to 2014.
 
-So the lab's own news index is the source. It's curated and stable, with real
-absolute URLs — but it is a *subset*: anything published elsewhere on rit.edu
-that never got added to the lab's page won't appear. `MANUAL` is the escape
-hatch.
+Two things the script has to handle, both explained at more length in its header:
+
+- **Promo cards share the results markup**, so a plain sweep for `/news/` links
+  picks up unrelated stories. Every candidate is fetched and kept only if the
+  article actually names him, matching the full name rather than the surname —
+  RIT news carries at least one other Merkel.
+- **The search index has holes.** At least one story that names him in plain text
+  never comes back from it. Those go in `PINNED`, as bare slugs.
+
+Still not a complete feed of "every RIT article mentioning Cory Merkel", but much
+closer than the old page. Google News RSS remains a bad substitute: a
+`"Cory Merkel"` query returns two obituaries for a different Merkel and an
+ice-hockey report, and its links are opaque `news.google.com` redirects rather
+than real article URLs.
+
+**The page only shows the last five years.** `CONFIG.maxAgeYears` in the script
+is a rolling window, so an article drops off on the first run after its fifth
+anniversary and its image is pruned with it. Widen the constant to bring older
+finds back — nothing is lost but the pictures, which re-download.
 
 One quirk handled in the script: RIT truncates its own meta descriptions
 mid-word. Summaries are trimmed back to the last complete sentence, or the last
@@ -447,10 +460,11 @@ Each scraped item gets a thumbnail, downloaded into `assets/news/` and committed
 an image RIT can move or delete out from under the site.
 
 Two URLs exist for the same picture, and picking the right one matters. The
-article page carries the full-size original on `cdn.rit.edu` (~180 KB each, about
-1 MB across the list); the news *index* carries Drupal's pre-sized
-`news_thumbnail` variant, roughly 3.5× smaller. The script prefers the thumbnail
-and falls back to the original. Total is around 330 KB.
+article page carries the full-size original on `cdn.rit.edu` (~180 KB each); the
+*listing* carries Drupal's pre-sized `news_thumbnail` variant, roughly 3.5×
+smaller. The script prefers the thumbnail and falls back to the original. The
+search results pages serve the same variant the retired lab index did, so this
+survived the move to a search-based source unchanged.
 
 Those thumbnail URLs carry an `itok` signature that **expires** — fatal if we
 hotlinked them, irrelevant when downloading, since the token only has to be valid
@@ -544,9 +558,12 @@ twice changes nothing.
 
 ## Things worth doing later
 
-- **Keep `rit.edu/brainlab` alive** as a one-page stub pointing here. Department
-  directories, grant reports, and old news articles link there, and a `.edu` domain
-  carries real search weight. Don't delete it.
+- **Ask RIT to redirect `rit.edu/brainlab` here.** This used to read "keep it
+  alive as a stub" — too late, RIT retired the subsite and every path under it
+  now 404s. That is worse than a stub: department directories, grant reports, and
+  old articles still link there, and all of that link equity is currently landing
+  on an error page. A 301 to `brainlabresearch.org` recovers it; only RIT's web
+  team can set one up.
 - **Selected publications section.** Right now Publications links straight to
   Google Scholar. Six to eight hand-picked papers with venue and PDF links on the
   site itself is the single biggest upgrade for recruiting.

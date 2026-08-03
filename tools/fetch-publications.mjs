@@ -316,12 +316,15 @@ ${items.map(renderWork).join('\n')}`).join('\n');
 
 <nav class="nav" id="nav">
   <div class="nav-in">
-    <a class="brand" href="index.html">BRAIN LAB <span>RESEARCH</span></a>
-    <div class="nav-links">
+    <a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true"></span>BRAIN LAB <span>RESEARCH</span></a>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-links" aria-label="Menu"><span></span><span></span><span></span></button>
+    <div class="nav-links" id="nav-links">
       <a href="research.html">Research</a>
       <a href="people.html">People</a>
       <a href="news.html">News</a>
       <a href="publications.html" aria-current="page">Publications</a>
+      <a href="learn.html">Learn</a>
+      <a href="contact.html">Contact</a>
       <a href="index.html#join" class="nav-cta">Join us</a>
     </div>
   </div>

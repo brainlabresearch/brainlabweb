@@ -25,8 +25,24 @@ jobs:
         with:
           node-version: '20'
 
+      # Exit 3 means Crossref was rate-limited badly enough that the citations
+      # would have regressed, so the script left publications.html alone. That
+      # must not abort the job: the news and topic refreshes below are unrelated
+      # and still worth committing. The run is failed at the end instead, after
+      # the commit, so the result is visible rather than buried in a green log.
       - name: Rebuild publications page
-        run: node tools/fetch-publications.mjs
+        id: publications
+        run: |
+          set +e
+          node tools/fetch-publications.mjs
+          code=$?
+          set -e
+          if [ "$code" -eq 3 ]; then
+            echo 'degraded=true' >> "$GITHUB_OUTPUT"
+            echo '::warning::Crossref rate-limited; publications.html left unchanged.'
+            exit 0
+          fi
+          exit "$code"
 
       - name: Rebuild topic-cloud data
         run: node tools/fetch-topics.mjs
@@ -45,3 +61,13 @@ jobs:
           git add publications.html assets/data/topics.json news.html index.html feed.xml feed-announce.xml assets/news
           git commit -m "Refresh publications, topics, and news"
           git push
+
+      # Deliberately last. Everything above has already run and committed, so
+      # this only reports — it does not cost the news refresh. Without it a
+      # Crossref outage would leave publications.html quietly stale behind a
+      # green tick, which is how the last one went unnoticed.
+      - name: Report stale publications
+        if: always() && steps.publications.outputs.degraded == 'true'
+        run: |
+          echo '::error::Crossref rate limiting left publications.html unrefreshed. Other updates were committed. Re-run the workflow to retry.'
+          exit 1

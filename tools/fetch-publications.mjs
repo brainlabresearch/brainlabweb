@@ -398,14 +398,22 @@ const coverage = works.length ? named / works.length : 0;
  * what matters is whether the page is good, not how it got that way. OpenAlex
  * alone covers about half of these papers and a healthy run covers all but one,
  * so neither case lands anywhere near 90%.
+ *
+ * Exit 3 rather than 1, and note that publications.html is left untouched. The
+ * workflow distinguishes the two: a degraded run must not abort the job, because
+ * this is the first of three refresh steps and failing here would also strand
+ * the news and topic updates that come after it. It lets those finish and commit
+ * before failing the run at the end. Any other non-zero exit is a real error and
+ * stops the job where it happens.
  */
 const FLOOR = 0.9;
+const DEGRADED_EXIT = 3;
 if (coverage < FLOOR && !process.env.ALLOW_DEGRADED) {
-  console.error(`\nERROR   only ${named}/${works.length} entries (${Math.round(coverage * 100)}%) have a venue; expected at least ${FLOOR * 100}%.`);
-  console.error(`        ${crossrefFailures} Crossref lookups failed, which usually means rate limiting.`);
-  console.error('        Refusing to overwrite publications.html with degraded citations.');
-  console.error('        Re-run to pick them up, or set ALLOW_DEGRADED=1 to publish as-is.');
-  process.exit(1);
+  console.error(`\nDEGRADED  only ${named}/${works.length} entries (${Math.round(coverage * 100)}%) have a venue; expected at least ${FLOOR * 100}%.`);
+  console.error(`          ${crossrefFailures} Crossref lookups failed, which usually means rate limiting.`);
+  console.error('          publications.html is unchanged — the previous version stands.');
+  console.error('          Re-run to pick them up, or set ALLOW_DEGRADED=1 to publish as-is.');
+  process.exit(DEGRADED_EXIT);
 }
 
 mkdirSync(dirname(CONFIG.out), { recursive: true });

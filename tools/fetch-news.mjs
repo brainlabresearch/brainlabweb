@@ -102,6 +102,12 @@ const MANUAL = [
     /* Photographed in the room, so there is no URL to fetch it from; the file is
        committed alongside the scraped thumbnails and named here directly. */
     image: 'assets/news/karthik-kumar-thesis-defense.jpg',
+    /* Same crop at 1620x1080 for the enlarged view — the 540px thumbnail the
+       list uses has nothing to zoom into. */
+    imageLarge: 'assets/news/karthik-kumar-thesis-defense-large.jpg',
+    /* Deliberately does not say who is who — that is not readable from the
+       photograph, and a wrong name in alt text is worse than none. */
+    imageAlt: 'Three people standing either side of a projection screen showing the SpikeRFF thesis defence title slide.',
     summary: 'Congratulations to Karthik Kumar on successfully defending his MS in AI thesis, “SpikeRFF: Learning Forward with Layer-Local Plasticity and Semi-Hard Negatives.” His work explores self-supervised learning of spiking neural networks without backpropagation. Thank you to Alex Ororbia and Sathwika Bavikadi for serving on Karthik’s committee.',
     summaryHtml: 'Congratulations to Karthik Kumar on successfully defending his MS in AI thesis, “SpikeRFF: Learning Forward with Layer-Local Plasticity and Semi-Hard Negatives.” His work explores self-supervised learning of spiking neural networks without backpropagation. Thank you to Alex Ororbia and Sathwika Bavikadi for serving on Karthik’s committee.',
     announce: true,
@@ -295,9 +301,15 @@ const item = (n) => {
   const linked = n.url && n.linkTitle !== false;
   const head = linked ? `<a href="${esc(n.url)}">${esc(n.title)}</a>` : esc(n.title);
   /* The cell is emitted even with no picture, so every headline in the list
-     still starts on the same vertical line. */
+     still starts on the same vertical line.
+   *
+   * A picture is wrapped in a plain link to the biggest copy we hold. site.js
+   * upgrades that into a dialog; with no JS the link still opens the image,
+   * which is the whole point of making it an anchor rather than a button. */
+  const full = n.imageLarge ?? n.image;
   const pic = n.image
-    ? `<span class="thumb"><img src="${esc(n.image)}" alt="" loading="lazy" onerror="this.closest('.thumb').remove()"></span>`
+    ? `<a class="thumb" href="${esc(full)}" aria-label="View larger image">`
+      + `<img src="${esc(n.image)}" alt="${esc(n.imageAlt ?? '')}" loading="lazy" onerror="this.closest('.thumb').remove()"></a>`
     : '<span class="thumb"></span>';
   return `  <div class="news-item">
     <span class="date">${esc(fmt(n.date))}</span>
@@ -390,6 +402,11 @@ for (const n of MANUAL) {
     if (!existsSync(resolve(ROOT, n.image))) {
       console.warn(`  MISSING ${n.image} — “${n.title}” will render without a picture.`);
       delete n.image;
+      delete n.imageLarge;
+    } else if (n.imageLarge && !existsSync(resolve(ROOT, n.imageLarge))) {
+      /* Fall back to the thumbnail rather than linking at a 404. */
+      console.warn(`  MISSING ${n.imageLarge} — enlarged view falls back to the thumbnail.`);
+      delete n.imageLarge;
     }
     continue;
   }
@@ -407,7 +424,10 @@ const all = [...scraped, ...MANUAL]
    pictures too — so the keep-set is built from what actually got published
    rather than from the scraped list. Only ever touches .jpg files in this one
    directory, and only on a run that got past the verification guard above. */
-const keep = new Set(all.filter((n) => n.image).map((n) => basename(n.image)));
+/* Not .map(basename) — map hands the index in as basename's second argument,
+   which it reads as a suffix to strip and rejects for not being a string. */
+const keep = new Set(all.flatMap((n) => [n.image, n.imageLarge].filter(Boolean))
+  .map((p) => basename(p)));
 let pruned = 0;
 for (const f of readdirSync(IMG_DIR)) {
   if (!/\.jpg$/i.test(f) || keep.has(f)) continue;

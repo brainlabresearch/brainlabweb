@@ -244,6 +244,21 @@ dialog.bio[open]::backdrop{animation:bio-fade .22s ease}
    unclickable — the headline's ::after would swallow every click. */
 .news-item p a{position:relative;z-index:1;color:inherit;text-decoration:none;border-bottom:1.5px solid var(--excite);padding-bottom:1px}
 .news-item p a:hover{background:rgba(247,105,2,.12)}
+/* The picture links to a larger copy. On a scraped item the headline's stretched
+   ::after covers the whole card, so this has to be raised above it or the click
+   goes to the article instead — the same fix the inline summary links need. */
+a.thumb{position:relative;z-index:1;cursor:zoom-in;display:block}
+a.thumb:focus-visible{outline:2px solid var(--excite);outline-offset:2px}
+
+/* Enlarged view. Sized to the viewport rather than the file so a big picture
+   cannot overflow on a phone. */
+dialog.lightbox{border:0;padding:0;background:none;max-width:none;max-height:none;
+  width:100%;height:100%;overflow:hidden}
+dialog.lightbox::backdrop{background:rgba(13,21,34,.82);backdrop-filter:blur(3px)}
+dialog.lightbox img{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  max-width:calc(100vw - 32px);max-height:calc(100vh - 32px);
+  width:auto;height:auto;cursor:zoom-out;box-shadow:0 24px 70px rgba(13,21,34,.4)}
+
 .news-item .arrow{font-family:var(--mono);color:var(--rule);font-size:18px;transition:color .2s ease,transform .2s ease}
 .news-item:hover h4{color:var(--excite)}
 .news-item:hover .arrow{color:var(--excite);transform:translateX(4px)}

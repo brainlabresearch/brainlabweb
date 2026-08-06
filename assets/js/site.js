@@ -141,6 +141,51 @@
   });
 })();
 
+/* Enlarging a news photo.
+   The thumbnails ship as links to the largest copy of the picture we hold, so
+   with no JS a click simply opens that file — which is a perfectly reasonable
+   outcome and the reason they are anchors rather than buttons. Here that is
+   upgraded into a dialog, reusing the same native <dialog> the bios use for
+   Escape, focus trapping, and inerting the page behind.
+   One dialog is built and shared, rather than one per item. */
+(function () {
+  var links = document.querySelectorAll('a.thumb');
+  if (!links.length || typeof HTMLDialogElement === 'undefined') return;
+
+  var dlg = document.createElement('dialog');
+  dlg.className = 'lightbox';
+  var img = document.createElement('img');
+  dlg.appendChild(img);
+  document.body.appendChild(dlg);
+  if (typeof dlg.showModal !== 'function') return;
+
+  var opener = null;
+
+  Array.prototype.forEach.call(links, function (a) {
+    a.addEventListener('click', function (e) {
+      /* Leave modified clicks alone so "open in new tab" keeps working. */
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+      e.preventDefault();
+      var inner = a.querySelector('img');
+      img.src = a.getAttribute('href');
+      img.alt = (inner && inner.alt) || '';
+      opener = a;
+      dlg.showModal();
+    });
+  });
+
+  /* The image fills the dialog, so a click that lands on the dialog itself is a
+     click on the backdrop. Clicking the picture closes it too — there is
+     nothing else in here to interact with. */
+  dlg.addEventListener('click', function () { dlg.close(); });
+
+  dlg.addEventListener('close', function () {
+    /* Drop the source so a large picture is not held once it is out of view. */
+    img.removeAttribute('src');
+    if (opener) opener.focus();
+  });
+})();
+
 /* Mobile nav. Below 820px the links live in a panel behind the toggle; above it
    the toggle is hidden and this does nothing. */
 (function () {

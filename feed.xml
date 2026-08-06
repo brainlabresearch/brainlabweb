@@ -7,6 +7,13 @@
   <description>News and coverage from the Brain Lab.</description>
   <language>en-us</language>
   <item>
+    <title>Karthik Kumar Defends Thesis on Efficient Spike-Based Learning</title>
+    <link>https://www.brainlabresearch.org/news.html</link>
+    <guid isPermaLink="false">https://www.brainlabresearch.org/news.html#2026-08-05-karthik-kumar-defends-thesis-on-efficient-spike-based-learni</guid>
+    <pubDate>Wed, 05 Aug 2026 12:00:00 GMT</pubDate>
+    <description>Congratulations to Karthik Kumar on successfully defending his MS in AI thesis, “SpikeRFF: Learning Forward with Layer-Local Plasticity and Semi-Hard Negatives.” His work explores self-supervised learning of spiking neural networks without backpropagation. Thank you to Alex Ororbia and Sathwika Bavikadi for serving on Karthik’s committee.</description>
+  </item>
+  <item>
     <title>Manali Dangarikar to present at NAECON 2026</title>
     <link>https://attend.ieee.org/naecon-2026/</link>
     <guid isPermaLink="true">https://attend.ieee.org/naecon-2026/</guid>

@@ -94,6 +94,19 @@ const PINNED = [
  */
 const MANUAL = [
   {
+    /* From the photograph's EXIF capture time, 5 Aug 2026 16:15. */
+    date: '2026-08-05',
+    title: 'Karthik Kumar Defends Thesis on Efficient Spike-Based Learning',
+    /* A defence is an event, not an article — there is nowhere to link. */
+    linkTitle: false,
+    /* Photographed in the room, so there is no URL to fetch it from; the file is
+       committed alongside the scraped thumbnails and named here directly. */
+    image: 'assets/news/karthik-kumar-thesis-defense.jpg',
+    summary: 'Congratulations to Karthik Kumar on successfully defending his MS in AI thesis, “SpikeRFF: Learning Forward with Layer-Local Plasticity and Semi-Hard Negatives.” His work explores self-supervised learning of spiking neural networks without backpropagation. Thank you to Alex Ororbia and Sathwika Bavikadi for serving on Karthik’s committee.',
+    summaryHtml: 'Congratulations to Karthik Kumar on successfully defending his MS in AI thesis, “SpikeRFF: Learning Forward with Layer-Local Plasticity and Semi-Hard Negatives.” His work explores self-supervised learning of spiking neural networks without backpropagation. Thank you to Alex Ororbia and Sathwika Bavikadi for serving on Karthik’s committee.',
+    announce: true,
+  },
+  {
     date: '2026-07-29',
     title: 'Manali Dangarikar to present at NAECON 2026',
     url: 'https://attend.ieee.org/naecon-2026/',
@@ -139,6 +152,9 @@ const clean = (s) => String(s ?? '')
 
 const esc = (s) => String(s ?? '')
   .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+const slugify = (s) => String(s ?? '').toLowerCase()
+  .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60);
 
 /**
  * RIT cuts its own meta descriptions at a fixed length, mid-word — one of them
@@ -366,10 +382,19 @@ if (!verified) {
 }
 
 /* MANUAL entries may name an imageUrl; download it the same way so nothing on
-   the page is hotlinked from someone else's server. */
+   the page is hotlinked from someone else's server. An entry may instead name an
+   `image` that is already committed under assets/news — a photo taken in the
+   room was never published anywhere there is a URL to fetch it from. */
 for (const n of MANUAL) {
+  if (n.image) {
+    if (!existsSync(resolve(ROOT, n.image))) {
+      console.warn(`  MISSING ${n.image} — “${n.title}” will render without a picture.`);
+      delete n.image;
+    }
+    continue;
+  }
   if (!n.imageUrl) continue;
-  const slug = (n.slug ?? n.title).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60);
+  const slug = slugify(n.slug ?? n.title);
   const saved = await saveImage(n.imageUrl, slug, resolve(ROOT, 'assets/news'));
   if (saved) n.image = saved.file;
 }
@@ -422,13 +447,23 @@ const buildFeed = (title, self, list, desc) => `<?xml version="1.0" encoding="UT
   <atom:link href="${SITE}/${self}" rel="self" type="application/rss+xml"/>
   <description>${desc}</description>
   <language>en-us</language>
-${list.map((n) => `  <item>
+${list.map((n) => {
+  /* Not every item has somewhere to point: a thesis defence is an event, not an
+     article. Those link to the news page and carry a non-permalink guid built
+     from the date and title, because a feed watcher dedupes on guid and every
+     such item would otherwise share an empty one and post only once, ever. */
+  const link = n.url || `${SITE}/news.html`;
+  const guid = n.url
+    ? `<guid isPermaLink="true">${esc(n.url)}</guid>`
+    : `<guid isPermaLink="false">${esc(`${SITE}/news.html#${n.date}-${slugify(n.title)}`)}</guid>`;
+  return `  <item>
     <title>${esc(n.title)}</title>
-    <link>${esc(n.url)}</link>
-    <guid isPermaLink="true">${esc(n.url)}</guid>
+    <link>${esc(link)}</link>
+    ${guid}
     <pubDate>${rfc822(n.date)}</pubDate>
     <description>${esc(n.summary)}</description>
-  </item>`).join('\n')}
+  </item>`;
+}).join('\n')}
 </channel>
 </rss>
 `;
